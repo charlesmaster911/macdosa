@@ -1,0 +1,118 @@
+{
+  "users": [],
+  "analyses": [
+    {
+      "id": "1776512884588",
+      "ip": "::1",
+      "email": null,
+      "url": "https://www.coupang.com/vp/products/9140128274?itemId=26906195809&vendorItemId=93875613384",
+      "tier": "free",
+      "date": "2026-04-18",
+      "model": "MacBook Pro 14 M4 Pro 24GB 1TB",
+      "saveAmount": 210000,
+      "createdAt": "2026-04-18T11:48:04.588Z"
+    },
+    {
+      "id": "1776513265875",
+      "ip": "::1",
+      "email": null,
+      "url": "https://www.coupang.com/vp/products/9140128274?itemId=26906195809&vendorItemId=93875613384",
+      "tier": "free",
+      "date": "2026-04-18",
+      "model": "MacBook Pro 14 M4 Pro 24GB 1TB",
+      "saveAmount": 269000,
+      "createdAt": "2026-04-18T11:54:25.875Z"
+    },
+    {
+      "id": "1776513515534",
+      "ip": "::1",
+      "email": null,
+      "url": "https://www.coupang.com/vp/products/9140128274?itemId=26906195809&vendorItemId=93875613384",
+      "tier": "free",
+      "date": "2026-04-18",
+      "model": "MacBook Pro 14 M4 Pro 24GB 1TB",
+      "saveAmount": 150000,
+      "createdAt": "2026-04-18T11:58:35.534Z"
+    }
+  ],
+  "purchases": [
+    {
+      "id": "macdosa-1776492385348-s4elk",
+      "email": "charles@test.com",
+      "payType": "ONETIME",
+      "amount": 9900,
+      "token": "Y2hhcmxlc0B0ZXN0LmNvbToxNzc2NDkyMzg1MzQ4",
+      "tier": "one-time",
+      "status": "beta",
+      "createdAt": "2026-04-18T06:06:25.348Z"
+    },
+    {
+      "id": "macdosa-1776492656881-a56bv",
+      "email": "user1@naver.com",
+      "payType": "ONETIME",
+      "amount": 9900,
+      "token": "dXNlcjFAbmF2ZXIuY29tOjE3NzY0OTI2NTY4ODI=",
+      "tier": "one-time",
+      "status": "beta",
+      "createdAt": "2026-04-18T06:10:56.882Z"
+    },
+    {
+      "id": "macdosa-1776492656891-r85mh",
+      "email": "user2@kakao.com",
+      "payType": "SUBSCRIPTION_MONTHLY",
+      "amount": 19900,
+      "token": "dXNlcjJAa2FrYW8uY29tOjE3NzY0OTI2NTY4OTE=",
+      "tier": "pro",
+      "status": "beta",
+      "createdAt": "2026-04-18T06:10:56.891Z"
+    },
+    {
+      "id": "macdosa-1776492656899-2kywt",
+      "email": "user3@gmail.com",
+      "payType": "ONETIME",
+      "amount": 9900,
+      "token": "dXNlcjNAZ21haWwuY29tOjE3NzY0OTI2NTY4OTk=",
+      "tier": "one-time",
+      "status": "beta",
+      "createdAt": "2026-04-18T06:10:56.899Z"
+    },
+    {
+      "id": "macdosa-1776513544187-fg9di",
+      "email": "chang0691@gmail.com",
+      "payType": "ONETIME",
+      "amount": 9900,
+      "token": "Y2hhbmcwNjkxQGdtYWlsLmNvbToxNzc2NTEzNTQ0MTg3",
+      "tier": "one-time",
+      "status": "beta",
+      "createdAt": "2026-04-18T11:59:04.187Z"
+    },
+    {
+      "id": "macdosa-1776513748505-15yo7",
+      "email": "chang0691@gmail.com",
+      "payType": "SUBSCRIPTION_MONTHLY",
+      "amount": 19900,
+      "token": "Y2hhbmcwNjkxQGdtYWlsLmNvbToxNzc2NTEzNzQ4NTA1",
+      "tier": "pro",
+      "status": "beta",
+      "createdAt": "2026-04-18T12:02:28.505Z"
+    }
+  ],
+  "alerts": [],
+  "feedbacks": [
+    {
+      "id": "1776514627548",
+      "ip": "::1",
+      "email": null,
+      "content": "카드 할인 정보가 더 자세히 나왔으면 좋겠습니다",
+      "createdAt": "2026-04-18T12:17:07.548Z"
+    }
+  ],
+  "bonuses": [
+    {
+      "ip": "::1",
+      "date": "2026-04-18",
+      "uses": 2,
+      "createdAt": "2026-04-18T12:17:07.548Z"
+    }
+  ]
+}

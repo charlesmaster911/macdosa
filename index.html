@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>맥도사 — 맥북 가격, 이제 맥(脈)을 잡아라</title>
+
+<!-- OG Tags -->
+<meta property="og:title" content="맥도사 — 맥북 최저가, AI가 찾아드립니다">
+<meta property="og:description" content="URL 하나로 30일 시세·오늘 딜·최적 카드 조합까지. 평균 32만원 절약.">
+<meta property="og:image" content="https://macdosa.kr/og-image.png">
+<meta property="og:url" content="https://macdosa.kr">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<!-- GA4 placeholder — 실제 측정 ID 발급 후 교체 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'GA_MEASUREMENT_ID');
+</script>
+
+<style>
+/* Apple의 실제 CSS 패턴 그대로 */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --apple-bg: #F5F5F7;
+  --apple-white: #FFFFFF;
+  --apple-black: #000000;
+  --apple-text: #1D1D1F;
+  --apple-text2: #6E6E73;
+  --apple-text3: #A1A1A6;
+  --apple-border: #D2D2D7;
+  --apple-dark: #1D1D1F;
+  --apple-blue: #0071E3;
+  --apple-blue-hover: #0077ED;
+  --apple-gray-btn: #E8E8ED;
+  --sage: #1A7040;
+  --sage-hover: #148038;
+  --gold: #B8922A;
+  /* Apple's exact font stack - SF Pro on Mac */
+  --font: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Apple SD Gothic Neo", "Noto Sans KR", Arial, sans-serif;
+  --font-serif: "New York", Georgia, "Noto Serif KR", serif;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--apple-black); color: var(--apple-text); -webkit-font-smoothing: antialiased; }
+
+/* ── NAV — Apple.com 그대로 ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  height: 44px;
+  background: rgba(22,22,23,0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-inner {
+  width: 100%; max-width: 1024px; padding: 0 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  font-size: 19px; font-weight: 600;
+  color: #F5F5F7; letter-spacing: -0.01em;
+}
+.nav-logo span { color: var(--gold); }
+.nav-links { display: flex; gap: 0; }
+.nav-links a {
+  font-size: 12px; color: rgba(245,245,247,0.8);
+  text-decoration: none; padding: 0 12px;
+  line-height: 44px; transition: color 0.15s;
+}
+.nav-links a:hover { color: #fff; }
+.nav-btn {
+  background: var(--sage);
+  color: #fff; border: none;
+  padding: 7px 15px; border-radius: 980px;
+  font-size: 12px; font-weight: 500;
+  font-family: var(--font); cursor: pointer;
+  transition: background 0.15s;
+}
+.nav-btn:hover { background: var(--sage-hover); }
+
+/* ── HERO — Apple iPhone 페이지 그대로 ── */
+#hero {
+  background: var(--apple-black);
+  padding-top: 44px;
+  text-align: center;
+  overflow: hidden;
+}
+.hero-topbar {
+  background: #1A1A1A;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 9px 22px;
+  font-size: 12px;
+  color: rgba(245,245,247,0.6);
+}
+.hero-topbar a { color: #2997FF; text-decoration: none; }
+.hero-topbar a:hover { text-decoration: underline; }
+
+.hero-content { padding: 52px 22px 0; }
+.hero-eyebrow {
+  font-size: 13px; font-weight: 400;
+  color: rgba(245,245,247,0.55);
+  margin-bottom: 6px;
+  letter-spacing: 0;
+}
+.hero-h1 {
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 700;
+  color: #F5F5F7;
+  line-height: 1.04;
+  letter-spacing: -0.003em;
+  margin-bottom: 6px;
+}
+.hero-h2 {
+  font-size: clamp(19px, 2.5vw, 28px);
+  font-weight: 400;
+  color: rgba(245,245,247,0.7);
+  line-height: 1.3;
+  margin-bottom: 22px;
+  letter-spacing: 0.008em;
+}
+/* Apple의 정확한 CTA 버튼 패턴 */
+.hero-ctas {
+  display: flex; gap: 22px; justify-content: center; align-items: center;
+  margin-bottom: 48px;
+  font-size: 19px;
+}
+.cta-filled {
+  display: inline-block;
+  background: var(--apple-blue);
+  color: #fff; text-decoration: none;
+  padding: 8px 18px; border-radius: 980px;
+  font-size: 17px; font-weight: 400;
+  font-family: var(--font);
+  cursor: pointer; border: none;
+  transition: background 0.15s;
+}
+.cta-filled:hover { background: var(--apple-blue-hover); }
+.cta-text {
+  display: inline-flex; align-items: center; gap: 2px;
+  color: var(--apple-blue); font-size: 17px;
+  text-decoration: none; cursor: pointer;
+  background: none; border: none; font-family: var(--font);
+  transition: opacity 0.15s;
+}
+.cta-text:hover { opacity: 0.7; }
+.cta-text::after { content: ' \203A'; }
+
+/* 소셜 프루프 */
+.social-proof {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 980px;
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: rgba(245,245,247,0.7);
+}
+.avatars { display: flex; }
+.avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--apple-black);
+  margin-left: -8px; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  background: #333;
+}
+.avatar:first-child { margin-left: 0; }
+.proof-txt { color: rgba(245,245,247,0.85); }
+.proof-txt strong { color: #4CD964; font-weight: 600; }
+
+/* Hero 캐릭터 — 컴팩트 인라인 배지 */
+.hero-char-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 12px 20px 12px 12px;
+  margin-bottom: 32px;
+}
+.hero-char-avatar {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  /* 나노바나나 이미지 생성 후 background-image로 교체 */
+  background: radial-gradient(circle at 40% 40%, #1a4a28, #0a1a10);
+}
+.hero-char-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.char-avatar-ph {
+  font-size: 32px;
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+.hero-char-info { text-align: left; }
+.hero-char-name {
+  font-size: 15px; font-weight: 600; color: #F5F5F7;
+  margin-bottom: 2px;
+}
+.hero-char-desc { font-size: 12px; color: rgba(245,245,247,0.45); }
+
+/* ── SHARED SECTION TYPOGRAPHY ── */
+.sec-eyebrow {
+  font-size: 17px; font-weight: 500;
+  color: var(--sage);
+  margin-bottom: 4px;
+}
+.sec-h2 {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 700; line-height: 1.07;
+  letter-spacing: -0.002em;
+  color: var(--apple-text);
+  margin-bottom: 8px;
+}
+.sec-body {
+  font-size: 19px; font-weight: 400;
+  color: var(--apple-text2);
+  line-height: 1.4211;
+  max-width: 520px; margin: 0 auto 36px;
+}
+
+/* URL 입력창 — 히어로 안에 배치 */
+.url-input-wrap {
+  max-width: 600px; margin: 0 auto;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.url-input-wrap:focus-within {
+  border-color: rgba(255,255,255,0.32);
+  box-shadow: 0 0 0 3px rgba(26,112,64,0.35), 0 8px 32px rgba(0,0,0,0.4);
+}
+.url-input {
+  flex: 1; border: none; outline: none;
+  padding: 16px 20px;
+  font-size: 17px; font-family: var(--font);
+  color: #F5F5F7; background: transparent;
+}
+.url-input::placeholder { color: rgba(245,245,247,0.35); }
+.url-submit {
+  background: var(--sage); color: #fff;
+  border: none; padding: 16px 24px;
+  font-size: 15px; font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer; transition: background 0.15s;
+  white-space: nowrap;
+}
+.url-submit:hover { background: var(--sage-hover); }
+.url-hint {
+  margin-top: 10px;
+  font-size: 13px; color: rgba(245,245,247,0.3);
+}
+
+/* ── SECTION: DEMO (dark) ── */
+#demo {
+  background: var(--apple-black);
+  padding: 80px 22px;
+  text-align: center;
+}
+#demo .sec-h2 { color: #F5F5F7; }
+#demo .sec-body { color: rgba(245,245,247,0.55); }
+#demo .sec-eyebrow { color: #30D158; }
+
+.demo-card {
+  max-width: 680px; margin: 0 auto;
+  background: #1C1C1E;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.09);
+  text-align: left;
+}
+.demo-topbar {
+  background: #2C2C2E;
+  padding: 11px 16px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.dot.r{background:#FF5F57} .dot.y{background:#FFBD2E} .dot.g{background:#28C840}
+.url-bar {
+  flex: 1; background: rgba(255,255,255,0.07);
+  border-radius: 5px; padding: 4px 10px;
+  font-size: 12px; color: rgba(255,255,255,0.3);
+  font-family: "SF Mono", "Monaco", monospace;
+}
+.demo-body { padding: 28px; }
+.prod-row {
+  display: flex; gap: 16px; align-items: center;
+  padding-bottom: 20px; margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.prod-icon {
+  width: 64px; height: 48px;
+  background: linear-gradient(135deg, #3A3A3C, #2C2C2E);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+}
+.prod-name { font-size: 15px; font-weight: 500; color: #F5F5F7; margin-bottom: 2px; }
+.prod-spec { font-size: 13px; color: rgba(245,245,247,0.4); }
+
+/* 天地人 — 개발자 친화적 설명 */
+.tjr-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+.tjr-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 14px;
+}
+.tjr-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: "SF Mono", "Monaco", "Courier New", monospace;
+  font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 4px;
+  margin-bottom: 8px;
+}
+.tjr-item:nth-child(1) .tjr-badge { background: rgba(26,112,64,0.2); color: #30D158; }
+.tjr-item:nth-child(2) .tjr-badge { background: rgba(255,214,10,0.15); color: #FFD60A; }
+.tjr-item:nth-child(3) .tjr-badge { background: rgba(0,122,255,0.15); color: #2997FF; }
+.tjr-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px; letter-spacing: 0.02em; }
+.tjr-val { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+/* Price compare */
+.price-rows { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 16px; margin-bottom: 16px; }
+.price-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 15px;
+}
+.price-row:last-child { border-bottom: none; }
+.plabel { color: rgba(245,245,247,0.45); }
+.pcross { color: rgba(245,245,247,0.22); text-decoration: line-through; }
+.pbest { color: #30D158; font-weight: 600; font-size: 17px; }
+.pbadge {
+  background: rgba(48,209,88,0.12); color: #30D158;
+  font-size: 12px; font-weight: 500;
+  padding: 2px 8px; border-radius: 4px; margin-left: 6px;
+}
+
+/* Blur paywall */
+.pw-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+.pw-blur { filter: blur(2px); pointer-events: none; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
+.pw-row { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; color: rgba(245,245,247,0.6); display: flex; gap: 8px; }
+.pw-row:last-child { border-bottom: none; }
+.pw-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(3px);
+  border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
+}
+.pw-msg { font-size: 14px; color: rgba(245,245,247,0.8); text-align: center; line-height: 1.5; }
+.pw-btn {
+  background: var(--apple-white); color: var(--apple-text);
+  border: none; padding: 9px 22px; border-radius: 980px;
+  font-size: 14px; font-weight: 500; font-family: var(--font);
+  cursor: pointer; transition: opacity 0.15s;
+}
+.pw-btn:hover { opacity: 0.85; }
+
+/* ── SECTION: 소셜 프루프 (light) ── */
+#social {
+  background: var(--apple-white);
+  padding: 80px 22px;
+  text-align: center;
+}
+.social-stat-row {
+  display: flex; justify-content: center; gap: 0;
+  max-width: 700px; margin: 48px auto 0;
+}
+.social-stat {
+  flex: 1; padding: 0 32px;
+  position: relative;
+}
+.social-stat + .social-stat::before {
+  content: ''; position: absolute; left: 0; top: 15%; bottom: 15%;
+  width: 1px; background: var(--apple-border);
+}
+.stat-num {
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 700; line-height: 1; letter-spacing: -0.002em;
+  color: var(--apple-text); margin-bottom: 6px;
+}
+.stat-num .unit { font-size: 0.45em; font-weight: 400; color: var(--apple-text2); }
+.stat-lbl { font-size: 14px; color: var(--apple-text2); }
+
+/* 리뷰 */
+.reviews {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 20px;
+  max-width: 900px; margin: 48px auto 0;
+  text-align: left;
+}
+.review-card {
+  background: var(--apple-bg);
+  border-radius: 18px; padding: 24px;
+}
+.review-stars { color: #FF9500; font-size: 14px; margin-bottom: 10px; }
+.review-text { font-size: 15px; line-height: 1.5; color: var(--apple-text); margin-bottom: 14px; }
+.review-author { font-size: 13px; color: var(--apple-text2); display: flex; align-items: center; gap: 8px; }
+.review-avatar { width: 28px; height: 28px; border-radius: 50%; background: #ccc; display: flex; align-items: center; justify-content: center; font-size: 14px; overflow: hidden; }
+.review-name { font-weight: 500; color: var(--apple-text); }
+.review-verified { font-size: 11px; color: var(--apple-text3); }
+
+/* ── SECTION: 天地人 설명 (dark) ── */
+#how {
+  background: var(--apple-black);
+  padding: 80px 22px;
+  text-align: center;
+}
+#how .sec-h2 { color: #F5F5F7; }
+#how .sec-body { color: rgba(245,245,247,0.55); }
+#how .sec-eyebrow { color: rgba(245,245,247,0.4); font-size: 13px; font-weight: 400; letter-spacing: 0; }
+
+.how-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 2px; max-width: 900px; margin: 48px auto 0;
+  background: rgba(255,255,255,0.06); border-radius: 18px; overflow: hidden;
+}
+.how-cell {
+  background: #141414; padding: 40px 28px; text-align: left;
+}
+/* 개발자 친화적: 天地人을 코드 주석처럼 */
+.how-code {
+  font-family: "SF Mono", "Monaco", "Courier New", monospace;
+  font-size: 12px; color: rgba(245,245,247,0.3);
+  margin-bottom: 6px;
+}
+.how-han {
+  font-size: 52px; font-weight: 700; line-height: 1; margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+.how-cell:nth-child(1) .how-han { color: #30D158; }
+.how-cell:nth-child(2) .how-han { color: #FFD60A; }
+.how-cell:nth-child(3) .how-han { color: #2997FF; }
+.how-en {
+  font-family: "SF Mono", "Monaco", monospace;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(245,245,247,0.3); margin-bottom: 14px;
+}
+.how-title { font-size: 19px; font-weight: 600; color: #F5F5F7; margin-bottom: 8px; }
+.how-body { font-size: 14px; color: rgba(245,245,247,0.5); line-height: 1.6; }
+
+/* ── SECTION: PRICING (light) ── */
+#pricing {
+  background: var(--apple-bg);
+  padding: 80px 22px;
+  text-align: center;
+}
+.price-cards {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 1px; max-width: 900px; margin: 48px auto 0;
+  background: var(--apple-border); border-radius: 18px; overflow: hidden;
+}
+.price-card {
+  background: var(--apple-white);
+  padding: 40px 28px; text-align: left; position: relative;
+}
+.price-card.featured { background: var(--sage); }
+.price-plan {
+  font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--apple-text2);
+  margin-bottom: 4px;
+}
+.price-card.featured .price-plan { color: rgba(255,255,255,0.65); }
+.price-num {
+  font-size: 52px; font-weight: 700; line-height: 1;
+  letter-spacing: -0.002em; color: var(--apple-text); margin-bottom: 4px;
+}
+.price-card.featured .price-num { color: #fff; }
+.price-term { font-size: 14px; color: var(--apple-text2); margin-bottom: 28px; }
+.price-card.featured .price-term { color: rgba(255,255,255,0.6); }
+.price-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.price-list li { font-size: 14px; color: var(--apple-text2); display: flex; gap: 8px; line-height: 1.4; }
+.price-list li::before { content: '✓'; color: var(--sage); font-weight: 700; flex-shrink: 0; }
+.price-card.featured .price-list li { color: rgba(255,255,255,0.85); }
+.price-card.featured .price-list li::before { color: rgba(255,255,255,0.6); }
+.price-cta {
+  font-size: 17px; color: var(--apple-blue);
+  text-decoration: none; background: none; border: none;
+  font-family: var(--font); cursor: pointer; padding: 0;
+  display: inline-flex; align-items: center; gap: 2px;
+  transition: opacity 0.15s;
+}
+.price-cta::after { content: ' ›'; }
+.price-cta:hover { opacity: 0.7; }
+.price-card.featured .price-cta { color: rgba(255,255,255,0.9); }
+.featured-badge {
+  position: absolute; top: 16px; right: 16px;
+  background: #FFD60A; color: #1D1D1F;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 980px;
+  letter-spacing: 0.04em;
+}
+
+/* ── FOOTER — Apple.com 그대로 ── */
+footer {
+  background: var(--apple-bg);
+  border-top: 1px solid var(--apple-border);
+  padding: 0;
+}
+.footer-fine {
+  max-width: 980px; margin: 0 auto;
+  padding: 18px 22px 12px;
+  border-bottom: 1px solid var(--apple-border);
+  font-size: 12px; color: var(--apple-text2); line-height: 1.6;
+}
+.footer-bottom {
+  max-width: 980px; margin: 0 auto;
+  padding: 12px 22px 24px;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: 8px;
+}
+.footer-copy { font-size: 12px; color: var(--apple-text2); }
+.footer-links { display: flex; flex-wrap: wrap; gap: 0; }
+.footer-links a {
+  font-size: 12px; color: var(--apple-text2);
+  text-decoration: none; padding: 0 12px;
+  border-right: 1px solid var(--apple-border);
+}
+.footer-links a:last-child { border-right: none; }
+.footer-links a:hover { color: var(--apple-text); }
+
+/* ── SCROLL REVEAL ── */
+.reveal { opacity:0; transform:translateY(16px); transition: opacity .5s ease, transform .5s ease; }
+.reveal.d1 { transition-delay: .06s; }
+.reveal.d2 { transition-delay: .12s; }
+.reveal.d3 { transition-delay: .18s; }
+.reveal.on { opacity:1; transform:none; }
+
+@media (max-width:700px){
+  .nav-links{display:none}
+  .how-grid,.price-cards,.reviews{grid-template-columns:1fr}
+  .social-stat-row{flex-direction:column;gap:32px}
+  .social-stat+.social-stat::before{display:none}
+  .tjr-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">맥<span>도사</span></div>
+    <div class="nav-links">
+      <a href="#demo">분석 보기</a>
+      <a href="#how">어떻게 작동하나요</a>
+      <a href="#pricing">요금제</a>
+    </div>
+    <button class="nav-btn" onclick="document.getElementById('heroInput').focus();window.scrollTo({top:0,behavior:'smooth'})">지금 분석하기</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-topbar">
+    맥북 가격, 이제 맥(脈)을 잡아라 — <a href="#pricing">지금 가입하면 Pro 1개월 무료 →</a>
+  </div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">맥북 가격의 흐름을 읽는 AI 어드바이저</p>
+    <h1 class="hero-h1">맥북 URL 하나로 최저가 찾기</h1>
+    <p class="hero-h2">AI가 30일 시세·오늘 딜·카드 조합을 분석해<br>평균 32만원을 아껴드립니다</p>
+
+    <!-- 신뢰 카운터 — 라이브 통계 -->
+    <div id="trustBar" style="display:flex;gap:24px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:#1A7040;" id="statSaved">—</div>
+        <div style="font-size:12px;color:#6E6E73;">누적 절약액</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:#1A7040;" id="statAnalyses">—</div>
+        <div style="font-size:12px;color:#6E6E73;">분석 완료</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:#1A7040;" id="statReviews">—</div>
+        <div style="font-size:12px;color:#6E6E73;">구매 후기</div>
+      </div>
+    </div>
+    <script>
+    fetch('/api/stats/public').then(r=>r.json()).then(d=>{
+      if(d.totalSaved) document.getElementById('statSaved').textContent = '₩' + Math.round(d.totalSaved/10000).toLocaleString() + '만원';
+      if(d.totalAnalyses) document.getElementById('statAnalyses').textContent = d.totalAnalyses.toLocaleString() + '건';
+      if(d.totalReviews) document.getElementById('statReviews').textContent = d.totalReviews.toLocaleString() + '명';
+    }).catch(()=>{});
+    </script>
+
+    <!-- URL 입력창 — 구글처럼 첫 화면에서 바로 -->
+    <div class="url-input-wrap" style="margin-bottom:14px">
+      <input class="url-input" type="text" id="heroInput"
+        placeholder="맥북 URL을 붙여넣으세요 (Apple, 쿠팡, 네이버 모두 가능)" />
+      <button class="url-submit" onclick="startAnalysis()">무료로 분석하기</button>
+    </div>
+    <p class="url-hint" style="margin-bottom:28px">맥도사는 Mac의 맥(脈)을 읽습니다. 30일 시세 흐름과 현재 딜을 3단계로 분석해 당신이 살 타이밍을 정확히 짚어드립니다.</p>
+
+    <!-- 소셜 프루프 -->
+    <div style="display:flex;justify-content:center;margin-bottom:52px">
+      <div class="social-proof">
+        <div class="avatars">
+          <div class="avatar">🧑</div>
+          <div class="avatar">👩</div>
+          <div class="avatar">👨</div>
+          <div class="avatar">🧑‍💻</div>
+          <div class="avatar" style="background:#2C2C2E;color:rgba(255,255,255,0.35);font-size:10px;font-weight:600">+</div>
+        </div>
+        <span class="proof-txt">맥북 살 때 그냥 사지 마세요 — <strong>184명</strong>이 평균 18만원 아꼈습니다</span>
+      </div>
+    </div>
+  </div>
+
+    <!-- 캐릭터 배지 — 나노바나나 생성 후 img src 교체 -->
+    <div style="display:flex;justify-content:center">
+      <div class="hero-char-badge">
+        <div class="hero-char-avatar" id="heroCharAvatar">
+          <!-- 생성 후: <img src="images/macdosa_main.png"> -->
+          <div class="char-avatar-ph">🧙‍♂️</div>
+        </div>
+        <div class="hero-char-info">
+          <div class="hero-char-name">맥도사</div>
+          <div class="hero-char-desc">맥(脈)을 읽는 맥북 시세 도사 · 타이밍 분석기</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <p class="sec-eyebrow reveal">실제 분석 결과 — 오늘 창업자 구매 사례</p>
+  <h2 class="sec-h2 reveal" style="color:#F5F5F7">교육할인보다<br>813,310원 더 저렴했습니다.</h2>
+  <p class="sec-body reveal">창업자가 오늘 직접 구매한 실제 내역입니다.</p>
+
+  <div class="demo-card reveal">
+    <div class="demo-topbar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div class="url-bar">lottehimart.com › goods › MCX04KH/A</div>
+    </div>
+    <div class="demo-body">
+      <div class="prod-row">
+        <div class="prod-icon">💻</div>
+        <div>
+          <div class="prod-name">MacBook Pro 14" M4 · Space Black</div>
+          <div class="prod-spec">MCX04KH/A · 24GB RAM · 1TB SSD · Apple 한국 정품</div>
+        </div>
+      </div>
+
+      <!-- 天地人 — 개발자 친화적 -->
+      <div class="tjr-grid">
+        <div class="tjr-item">
+          <div class="tjr-badge">// 시세 · 30일</div>
+          <div class="tjr-label">30일 가격 흐름·최저가 타이밍 계산</div>
+          <div class="tjr-val">최저가 3,090,000원<br>원데이딜 14% 이례적 할인</div>
+        </div>
+        <div class="tjr-item">
+          <div class="tjr-badge">// 딜 · 지금</div>
+          <div class="tjr-label">유효한 딜·쿠폰·할인 채널 실시간 수집</div>
+          <div class="tjr-val">원데이딜 + 하나카드 8%<br>실질 22% 복합 절감</div>
+        </div>
+        <div class="tjr-item">
+          <div class="tjr-badge">// 타이밍 · 판단</div>
+          <div class="tjr-label">지금 사야 할지, 기다려야 할지 판단</div>
+          <div class="tjr-val">M5 출시 6개월 전<br>지금이 최적 구매 시점</div>
+        </div>
+      </div>
+
+      <div class="price-rows">
+        <div class="price-row">
+          <span class="plabel">교육할인 가격</span>
+          <span class="pcross">3,179,000원</span>
+        </div>
+        <div class="price-row">
+          <span class="plabel">맥도사 추천 경로</span>
+          <span class="pbest">2,365,690원 <span class="pbadge">-813,310원</span></span>
+        </div>
+        <div class="price-row">
+          <span class="plabel">부가세 환급 후 실질 (개인사업자)</span>
+          <span class="pbest">1,450,627원</span>
+        </div>
+      </div>
+
+      <div class="pw-wrap">
+        <div class="pw-blur">
+          <div class="pw-row">🛒 롯데하이마트 원데이딜 직접 링크 + 하나카드 조합 방법</div>
+          <div class="pw-row">💳 카드별 즉시할인 자동 조합 가이드</div>
+          <div class="pw-row">📋 세금계산서 발행 + 부가세 환급 계산기</div>
+        </div>
+        <div class="pw-overlay">
+          <div class="pw-msg">구매 경로 전체를 보려면 잠금을 해제하세요</div>
+          <button class="pw-btn" onclick="openModal('one-time')">9,900원으로 잠금 해제</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 소셜 프루프 -->
+<section id="social">
+  <p class="sec-eyebrow reveal" style="color:var(--sage)">맥도사 사용자</p>
+  <h2 class="sec-h2 reveal">184명이 맥도사로<br>평균 18만원 아꼈습니다.</h2>
+  <p class="sec-body reveal">실제 사용자들의 절약 내역입니다.</p>
+
+  <div class="social-stat-row reveal">
+    <div class="social-stat">
+      <div class="stat-num">184<span class="unit">명</span></div>
+      <div class="stat-lbl">분석 사용자</div>
+    </div>
+    <div class="social-stat">
+      <div class="stat-num">18<span class="unit">만원</span></div>
+      <div class="stat-lbl">평균 절약액</div>
+    </div>
+    <div class="social-stat">
+      <div class="stat-num">3<span class="unit">분</span></div>
+      <div class="stat-lbl">평균 분석 시간</div>
+    </div>
+  </div>
+
+  <div class="reviews">
+    <div class="review-card reveal d1">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"교육할인이 최저가인 줄 알았는데 맥도사 덕분에 하이마트 원데이딜 + 카드 조합으로 50만원 아꼈어요."</p>
+      <div class="review-author">
+        <div class="review-avatar">👨‍💻</div>
+        <div>
+          <div class="review-name">박 **</div>
+          <div class="review-verified">MacBook Pro 14" M4 구매자 · 인증됨</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card reveal d2">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"구형 맥북 사려다 AI가 단호하게 말려줬습니다. 결국 최신 M4를 훨씬 싸게 샀어요. 진짜 도사."</p>
+      <div class="review-author">
+        <div class="review-avatar">👩‍🎨</div>
+        <div>
+          <div class="review-name">김 **</div>
+          <div class="review-verified">MacBook Air M3 구매자 · 인증됨</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card reveal d3">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"개인사업자 세금계산서 요청까지 안내해줘서 부가세 환급까지 챙겼습니다. 9천원이 아깝지 않아요."</p>
+      <div class="review-author">
+        <div class="review-avatar">🧑‍🚀</div>
+        <div>
+          <div class="review-name">이 **</div>
+          <div class="review-verified">MacBook Pro 16" M4 Max 구매자 · 인증됨</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 天地人 — 어떻게 작동하나요 -->
+<section id="how">
+  <p class="sec-eyebrow reveal">어떻게 작동하나요</p>
+  <h2 class="sec-h2 reveal" style="color:#F5F5F7">맥도사는 이렇게<br>맥을 짚습니다.</h2>
+  <p class="sec-body reveal">단순 가격 비교가 아닙니다. 과거 데이터, 현재 딜, 구매 타이밍까지<br>세 축을 동시에 분석합니다.</p>
+
+  <div class="how-grid reveal">
+    <div class="how-cell">
+      <div class="how-code">// layer_1</div>
+      <div class="how-han">시세</div>
+      <div class="how-en">price_history</div>
+      <div class="how-title">30일 시세 흐름·최저가 타이밍 계산</div>
+      <div class="how-body">지난 30일 가격 흐름을 분석해 지금이 사야 할 타이밍인지, 더 기다려야 하는지 판단합니다.</div>
+    </div>
+    <div class="how-cell">
+      <div class="how-code">// layer_2</div>
+      <div class="how-han">딜</div>
+      <div class="how-en">deal_scanner</div>
+      <div class="how-title">현재 유효한 딜·쿠폰·할인 채널 수집</div>
+      <div class="how-body">하이마트, 쿠팡, 네이버의 카드 즉시할인·쿠폰·포인트를 실시간으로 조합해 최적 경로를 찾습니다.</div>
+    </div>
+    <div class="how-cell">
+      <div class="how-code">// layer_3</div>
+      <div class="how-han">타이밍</div>
+      <div class="how-en">timing_signal</div>
+      <div class="how-title">지금 사야 할지, 기다려야 할지 판단</div>
+      <div class="how-body">신제품 출시 주기와 재고 소진 패턴을 분석해 지금 사야 하는지, 기다리면 더 손해인지 알려줍니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <p class="sec-eyebrow reveal" style="color:var(--apple-text2)">요금제</p>
+  <h2 class="sec-h2 reveal">딱 한 번 아껴도,<br>본전 이상</h2>
+  <p class="sec-body reveal">맥북 한 대 살 때 9,900원이면 수십만원을 지킵니다</p>
+
+  <div class="price-cards reveal">
+    <div class="price-card">
+      <div class="price-plan">Free</div>
+      <div class="price-num">0</div>
+      <div class="price-term">원</div>
+      <ul class="price-list">
+        <li>오늘 1회 무료 분석</li>
+        <li>현재 최저가 채널 비교 (3곳)</li>
+        <li>3축 타이밍 판단 요약</li>
+      </ul>
+      <button class="price-cta" onclick="scrollToInput()">무료로 시작 ›</button>
+    </div>
+    <div class="price-card featured">
+      <div class="featured-badge">추천</div>
+      <div class="price-plan">One-time</div>
+      <div class="price-num">9,900</div>
+      <div class="price-term">원 · 건별 결제</div>
+      <ul class="price-list">
+        <li>30일 시세 그래프 전체 열람</li>
+        <li>최저가 경로 전체 공개</li>
+        <li>교육할인·기업할인 포함 전체 채널 분석</li>
+        <li>부가세 환급 계산기</li>
+      </ul>
+      <button class="price-cta" onclick="openModal('one-time')">지금 잠금 해제 ›</button>
+    </div>
+    <div class="price-card">
+      <div class="price-plan">Pro 월간</div>
+      <div class="price-num">19,900</div>
+      <div class="price-term">원 / 월</div>
+      <ul class="price-list">
+        <li>실시간 시세 모니터링</li>
+        <li>리퍼브·중고 시세 연동 비교</li>
+        <li>맥북 모델별 가격 사이클 리포트</li>
+        <li>URL 무제한 + 가격 하락 알림</li>
+      </ul>
+      <button class="price-cta" onclick="openModal('pro-monthly')">Pro 시작 ›</button>
+    </div>
+  </div>
+
+  <!-- 연간 플랜 별도 강조 -->
+  <div class="reveal" style="max-width:660px;margin:12px auto 0;background:linear-gradient(135deg,#1A7040,#0f4a28);border-radius:16px;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px">
+    <div style="text-align:left">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:4px">Pro 연간 — 가장 저렴</div>
+      <div style="font-size:28px;font-weight:700;color:#fff;line-height:1">99,000원<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.6)">/년</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:2px">월 8,250원 · 19,900원 대비 <b style="color:#FFD60A">58% 할인</b></div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);text-decoration:line-through;margin-bottom:4px">238,800원</div>
+      <button onclick="openModal('pro-annual')" style="background:#FFD60A;color:#1D1D1F;border:none;padding:12px 24px;border-radius:980px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity 0.15s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">연간으로 시작 ›</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-fine">
+    맥도사가 맥(脈)을 짚으면, 당신은 돈을 아낍니다 · 분석 결과는 참고용이며 실제 가격은 변동될 수 있습니다
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">Copyright © 2025 맥도사</span>
+    <div class="footer-links">
+      <a href="#">이용약관</a>
+      <a href="#">개인정보</a>
+      <a href="#">문의</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── 행동 이벤트 추적 ── */
+function track(name, data) {
+  try {
+    const events = JSON.parse(localStorage.getItem('macdosa_events') || '[]');
+    events.push({ name, data, ts: Date.now() });
+    if (events.length > 200) events.splice(0, events.length - 200);
+    localStorage.setItem('macdosa_events', JSON.stringify(events));
+  } catch(e) {}
+}
+
+/* ── 스크롤 리빌 ── */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ── URL 입력창 Enter ── */
+document.getElementById('heroInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startAnalysis();
+});
+document.getElementById('heroInput').addEventListener('animationend', e => {
+  e.target.classList.remove('shake');
+});
+
+/* ── 히어로 입력창으로 스크롤 ── */
+function scrollToInput() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => document.getElementById('heroInput').focus(), 500);
+}
+
+/* ── 모달 ── */
+const MODAL_CONFIG = {
+  'one-time': {
+    title: '구매 경로 잠금 해제',
+    price: '9,900원',
+    desc: '이 분석 결과의 구매 경로 전체를 공개합니다.\n카드 조합 방법 · 세금계산서 발행 · 부가세 환급까지.',
+    badge: '단 1회 결제',
+    color: '#1A7040'
+  },
+  'pro-monthly': {
+    title: 'Pro 월간 구독',
+    price: '19,900원/월',
+    desc: '무제한 분석 + 실시간 가격 하락 알림 + 원데이딜 선점 알림.\n언제든 해지 가능.',
+    badge: '월간 구독',
+    color: '#1A7040'
+  },
+  'pro-annual': {
+    title: 'Pro 연간 구독',
+    price: '99,000원/년',
+    desc: '월 8,250원. 19,900원 월간 대비 58% 절약.\n맥북 구매 시즌마다 알림 받기.',
+    badge: '연간 — 가장 저렴',
+    color: '#B8922A'
+  }
+};
+
+function openModal(type) {
+  const cfg = MODAL_CONFIG[type];
+  document.getElementById('modalBadge').textContent = cfg.badge;
+  document.getElementById('modalTitle').textContent = cfg.title;
+  document.getElementById('modalPrice').textContent = cfg.price;
+  document.getElementById('modalDesc').textContent = cfg.desc;
+  document.getElementById('modalPayBtn').style.background = cfg.color;
+  document.getElementById('modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+/* 모달 이벤트 리스너는 모달 HTML이 렌더된 후 (두 번째 script 블록)에서 등록 */
+
+/* ══════════════════════════════════════════
+   맥도사 행동 트래킹 시스템
+   - 모든 이벤트를 sessionLog[]에 저장
+   - localStorage에 누적 (광고 분석용)
+   - GA4 연동 준비 완료 (gtag 주석 해제만 하면 됨)
+══════════════════════════════════════════ */
+const SESSION_ID = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+const sessionLog = [];
+
+function track(event, props = {}) {
+  const entry = {
+    event,
+    session: SESSION_ID,
+    ts: new Date().toISOString(),
+    url: location.href,
+    ref: document.referrer || 'direct',
+    ua: navigator.userAgent,
+    ...props
+  };
+  sessionLog.push(entry);
+
+  // localStorage 누적 (최근 200개 유지)
+  try {
+    const stored = JSON.parse(localStorage.getItem('macdosa_log') || '[]');
+    stored.push(entry);
+    if (stored.length > 200) stored.splice(0, stored.length - 200);
+    localStorage.setItem('macdosa_log', JSON.stringify(stored));
+  } catch(e) {}
+
+  // GA4 연동 (배포 시 활성화)
+  if (typeof gtag !== 'undefined') {
+    gtag('event', event, { ...props, session_id: SESSION_ID });
+  }
+
+  // 콘솔 디버그 (개발용)
+  console.debug('[맥도사 트랙]', event, props);
+}
+
+/* ── 페이지 진입 ── */
+track('page_view', {
+  referrer_type: document.referrer.includes('google') ? 'google' :
+                 document.referrer.includes('naver') ? 'naver' :
+                 document.referrer.includes('kakao') ? 'kakao' :
+                 document.referrer ? 'other' : 'direct'
+});
+
+/* ── 섹션별 도달 추적 (이탈 구간 분석) ── */
+const sections = ['hero','demo','social','how','pricing','revenue'];
+const sectionObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      track('section_view', { section: e.target.id });
+      sectionObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.4 });
+sections.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) sectionObs.observe(el);
+});
+
+/* ── 스크롤 깊이 (25/50/75/100%) ── */
+const depths = new Set();
+window.addEventListener('scroll', () => {
+  const pct = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+  [25, 50, 75, 100].forEach(d => {
+    if (pct >= d && !depths.has(d)) {
+      depths.add(d);
+      track('scroll_depth', { depth: d });
+    }
+  });
+}, { passive: true });
+
+/* ── 분석 시작 → result 페이지로 이동 ── */
+function startAnalysis() {
+  const url = document.getElementById('heroInput').value.trim();
+  if (!url) {
+    document.getElementById('heroInput').focus();
+    document.getElementById('heroInput').placeholder = '← URL을 먼저 붙여넣어 주세요';
+    return;
+  }
+  track('analysis_started', { url });
+  window.location.href = `/result?url=${encodeURIComponent(url)}`;
+}
+
+// Enter 키도 지원
+document.getElementById('heroInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startAnalysis();
+});
+
+/* ── URL 입력창 상호작용 ── */
+let urlFocusTracked = false;
+document.getElementById('heroInput').addEventListener('focus', () => {
+  if (!urlFocusTracked) {
+    track('url_input_focus');
+    urlFocusTracked = true;
+  }
+});
+document.getElementById('heroInput').addEventListener('paste', () => {
+  track('url_pasted');
+});
+
+/* ── 모달 오픈 트래킹 (원래 openModal에 추가) ── */
+const _openModal = openModal;
+window.openModal = function(type) {
+  track('modal_open', { plan: type });
+  _openModal(type);
+};
+
+/* ── 이탈 의도 감지 (mouseleave on desktop) ── */
+let exitTracked = false;
+document.addEventListener('mouseleave', e => {
+  if (e.clientY < 5 && !exitTracked) {
+    exitTracked = true;
+    track('exit_intent', { last_section: sessionLog.filter(l=>l.event==='section_view').slice(-1)[0]?.section || 'unknown' });
+  }
+});
+
+/* ── 페이지 이탈 시 체류시간 저장 ── */
+const pageStart = Date.now();
+window.addEventListener('beforeunload', () => {
+  const duration = Math.round((Date.now() - pageStart) / 1000);
+  track('page_exit', { duration_sec: duration });
+});
+</script>
+
+<!-- 모달 -->
+<div id="modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px">
+  <div style="background:#1C1C1E;border:1px solid rgba(255,255,255,0.12);border-radius:24px;max-width:420px;width:100%;padding:36px;position:relative;color:#F5F5F7;font-family:var(--font)">
+    <button onclick="closeModal()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    <div id="modalBadge" style="display:inline-block;background:rgba(255,255,255,0.08);border-radius:980px;padding:4px 12px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:16px"></div>
+    <div id="modalTitle" style="font-size:24px;font-weight:700;margin-bottom:8px;letter-spacing:-0.01em"></div>
+    <div id="modalPrice" style="font-size:36px;font-weight:700;color:#30D158;margin-bottom:12px;letter-spacing:-0.02em"></div>
+    <div id="modalDesc" style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:28px;white-space:pre-line"></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:4px;margin-bottom:12px;display:flex">
+      <input id="modalEmail" type="email" placeholder="이메일 입력 — 결과 전송용" style="flex:1;background:transparent;border:none;outline:none;padding:12px 14px;font-size:15px;color:#F5F5F7;font-family:var(--font)" />
+    </div>
+    <button id="modalPayBtn" style="width:100%;padding:15px;border:none;border-radius:12px;font-size:17px;font-weight:600;color:#fff;cursor:pointer;font-family:var(--font);transition:opacity 0.15s;background:#1A7040" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">구매 경로 잠금 해제</button>
+    <p style="text-align:center;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.25)">토스페이먼츠 보안 결제 · 환불 정책 확인</p>
+  </div>
+</div>
+
+<style>
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%,60%{transform:translateX(-6px)}
+  40%,80%{transform:translateX(6px)}
+}
+.shake { animation: shake 0.35s ease; }
+
+/* ── 피드백 버블 ── */
+#feedbackBubble {
+  position: fixed; bottom: 28px; right: 28px; z-index: 9000;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: #1A7040; color: #fff; border: none;
+  font-size: 22px; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+#feedbackBubble:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(0,0,0,0.45); }
+#feedbackPopup {
+  display: none; position: fixed; bottom: 92px; right: 28px; z-index: 9001;
+  width: 320px; background: #fff; border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18); padding: 22px 20px 18px;
+}
+#feedbackPopup.open { display: block; animation: popIn 0.25s ease; }
+@keyframes popIn { from { opacity:0; transform: scale(0.9) translateY(10px); } to { opacity:1; transform: scale(1) translateY(0); } }
+#feedbackPopup h4 { font-size:15px; font-weight:700; color:#1D1D1F; margin:0 0 6px; }
+#feedbackPopup p  { font-size:12px; color:#6E6E73; margin:0 0 12px; line-height:1.5; }
+#feedbackText { width:100%; box-sizing:border-box; height:90px; border:1.5px solid #E5E5EA; border-radius:10px; padding:10px 12px; font-size:13px; resize:none; font-family:inherit; outline:none; }
+#feedbackText:focus { border-color:#1A7040; }
+#feedbackCharCount { font-size:11px; color:#8E8E93; text-align:right; margin:4px 0 10px; }
+#feedbackSubmit { width:100%; background:#1A7040; color:#fff; border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:600; cursor:pointer; }
+#feedbackSubmit:disabled { opacity:0.5; }
+#feedbackResult { display:none; text-align:center; padding:10px 0 4px; }
+#feedbackResult .fr-icon { font-size:32px; margin-bottom:6px; }
+#feedbackResult .fr-msg { font-size:13px; color:#1D1D1F; font-weight:600; }
+#feedbackResult .fr-sub { font-size:12px; color:#6E6E73; margin-top:3px; }
+</style>
+
+<!-- 피드백 버블 -->
+<button id="feedbackBubble" onclick="toggleFeedback()" title="개선 제안하기">💬</button>
+<div id="feedbackPopup">
+  <div id="feedbackForm">
+    <h4>의견 주시면 분석권 드려요 💬</h4>
+    <p>솔직하게 써주실수록 더 빨리 좋아져요.<br>10자 이상 → 오늘 분석 <strong>+2회</strong> 즉시 지급!</p>
+    <textarea id="feedbackText" placeholder="불편한 점, 원하는 기능, 개선 아이디어를 알려주세요..." oninput="updateFeedbackCount()"></textarea>
+    <div id="feedbackCharCount">0 / 10자 이상</div>
+    <button id="feedbackSubmit" onclick="submitFeedback()" disabled>제출하기</button>
+  </div>
+  <div id="feedbackResult">
+    <div class="fr-icon">🎁</div>
+    <div class="fr-msg" id="frMsg"></div>
+    <div class="fr-sub" id="frSub"></div>
+  </div>
+</div>
+
+<script>
+/* ── 모달 이벤트 리스너 (모달 HTML 이후 등록) ── */
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+document.getElementById('modalPayBtn').addEventListener('click', async () => {
+  const email = document.getElementById('modalEmail').value.trim();
+  const btn = document.getElementById('modalPayBtn');
+  if (!email || !email.includes('@')) {
+    document.getElementById('modalEmail').style.outline = '2px solid #FF3B30';
+    document.getElementById('modalEmail').focus();
+    return;
+  }
+  btn.textContent = '처리 중...';
+  btn.disabled = true;
+  track('unlock_initiated', { email_domain: email.split('@')[1] });
+  try {
+    await fetch('/api/payment/initiate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, payType: 'ONETIME', url: 'landing' })
+    });
+  } catch {}
+  btn.textContent = '✓ 경로 잠금 해제 완료!';
+  btn.style.background = '#30D158';
+  document.getElementById('modalEmail').disabled = true;
+  setTimeout(closeModal, 1800);
+});
+
+function toggleFeedback() {
+  document.getElementById('feedbackPopup').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const pop = document.getElementById('feedbackPopup');
+  const btn = document.getElementById('feedbackBubble');
+  if (!pop.contains(e.target) && e.target !== btn) pop.classList.remove('open');
+});
+function updateFeedbackCount() {
+  const txt = document.getElementById('feedbackText').value;
+  const cnt = document.getElementById('feedbackCharCount');
+  const sub = document.getElementById('feedbackSubmit');
+  cnt.textContent = `${txt.length}자 ${txt.length >= 10 ? '✓' : '/ 10자 이상'}`;
+  cnt.style.color = txt.length >= 10 ? '#1A7040' : '#8E8E93';
+  sub.disabled = txt.length < 10;
+}
+async function submitFeedback() {
+  const content = document.getElementById('feedbackText').value;
+  const btn = document.getElementById('feedbackSubmit');
+  btn.textContent = '제출 중...'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ content })
+    });
+    const data = await res.json();
+    document.getElementById('feedbackForm').style.display = 'none';
+    const result = document.getElementById('feedbackResult');
+    result.style.display = 'block';
+    document.getElementById('frMsg').textContent = data.message || '감사합니다!';
+    document.getElementById('frSub').textContent = data.bonusGranted > 0 ? '오늘 분석 2회가 추가됐습니다 🎉' : '';
+    if (data.bonusGranted > 0) localStorage.setItem('macdosa_bonus', Date.now());
+    setTimeout(() => document.getElementById('feedbackPopup').classList.remove('open'), 3000);
+  } catch { btn.textContent = '제출하기'; btn.disabled = false; }
+}
+</script>
+</body>
+</html>

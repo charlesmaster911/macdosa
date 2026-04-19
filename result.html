@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>맥도사 — 분석 결과</title>
+
+<!-- OG Tags -->
+<meta property="og:title" content="맥도사 분석 결과 — 맥북 최저가 찾았습니다">
+<meta property="og:description" content="AI가 찾은 오늘의 최적 구매 경로를 확인하세요.">
+<meta property="og:image" content="https://macdosa.kr/og-image.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<!-- GA4 placeholder — 실제 측정 ID 발급 후 교체 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'GA_MEASUREMENT_ID');
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --apple-bg: #F5F5F7;
+  --apple-white: #FFFFFF;
+  --apple-text: #1D1D1F;
+  --apple-text2: #6E6E73;
+  --apple-border: #D2D2D7;
+  --apple-blue: #0071E3;
+  --sage: #1A7040;
+  --sage-hover: #148038;
+  --sage-light: #E8F5EE;
+  --gold: #B8922A;
+  --red: #FF3B30;
+  --font: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Apple SD Gothic Neo", "Noto Sans KR", Arial, sans-serif;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--apple-bg); color: var(--apple-text); -webkit-font-smoothing: antialiased; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  height: 44px;
+  background: rgba(22,22,23,0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-inner { width: 100%; max-width: 1024px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; }
+.nav-logo { font-size: 17px; font-weight: 600; color: #F5F5F7; text-decoration: none; letter-spacing: -0.01em; }
+.nav-logo span { color: #B8922A; }
+.nav-back { font-size: 12px; color: rgba(245,245,247,0.7); text-decoration: none; display: flex; align-items: center; gap: 4px; }
+.nav-back:hover { color: #fff; }
+
+/* MAIN */
+main { padding-top: 44px; }
+
+/* HERO RESULT BAR */
+.result-bar {
+  background: var(--apple-text);
+  color: #F5F5F7;
+  padding: 18px 22px;
+  text-align: center;
+}
+.result-bar .model-name { font-size: 13px; color: rgba(245,245,247,0.55); margin-bottom: 4px; }
+.result-bar .save-amount {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 700;
+  color: #34C759;
+  letter-spacing: -0.02em;
+}
+.result-bar .save-label { font-size: 14px; color: rgba(245,245,247,0.7); margin-top: 2px; }
+
+/* CONTAINER */
+.container { max-width: 800px; margin: 0 auto; padding: 32px 22px 80px; }
+
+/* SECTION TITLE */
+.section-title {
+  font-size: 13px; font-weight: 500;
+  color: var(--apple-text2);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+/* 天地人 CARDS */
+.tiandiren-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px; }
+@media (max-width: 600px) { .tiandiren-grid { grid-template-columns: 1fr; } }
+
+.tdr-card {
+  background: var(--apple-white);
+  border-radius: 18px;
+  padding: 22px 18px;
+  border: 1px solid var(--apple-border);
+}
+.tdr-icon { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--apple-accent); }
+.tdr-label {
+  font-size: 11px; font-weight: 600;
+  color: var(--apple-text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.tdr-title { font-size: 16px; font-weight: 600; color: var(--apple-text); margin-bottom: 8px; }
+.tdr-body { font-size: 13px; color: var(--apple-text2); line-height: 1.55; }
+.tdr-value {
+  display: inline-block;
+  background: var(--sage-light);
+  color: var(--sage);
+  font-size: 12px; font-weight: 600;
+  padding: 3px 10px; border-radius: 980px;
+  margin-top: 8px;
+}
+.tdr-value.warning { background: #FFF3E0; color: #E65100; }
+.tdr-value.good { background: #E8F5E9; color: #2E7D32; }
+
+/* VERDICT BOX */
+.verdict-box {
+  background: var(--apple-text);
+  color: #F5F5F7;
+  border-radius: 18px;
+  padding: 24px 22px;
+  margin-bottom: 32px;
+  display: flex; align-items: flex-start; gap: 16px;
+}
+.verdict-icon { font-size: 36px; flex-shrink: 0; }
+.verdict-text h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.verdict-text p { font-size: 14px; color: rgba(245,245,247,0.75); line-height: 1.6; }
+.verdict-badge {
+  display: inline-block;
+  background: #34C759;
+  color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 980px;
+  margin-bottom: 8px;
+}
+.verdict-badge.warning-badge { background: #FF9500; }
+
+/* PRICE HISTORY CHART */
+.chart-card {
+  background: var(--apple-white);
+  border-radius: 18px;
+  padding: 22px 18px;
+  border: 1px solid var(--apple-border);
+  margin-bottom: 32px;
+}
+.chart-wrapper { position: relative; height: 120px; margin-top: 16px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 100%; }
+.chart-bar { flex: 1; border-radius: 4px 4px 0 0; position: relative; transition: opacity 0.2s; }
+.chart-bar:hover { opacity: 0.8; }
+.chart-bar .tooltip {
+  display: none;
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--apple-text); color: #fff;
+  font-size: 10px; padding: 3px 7px; border-radius: 6px; white-space: nowrap;
+}
+.chart-bar:hover .tooltip { display: block; }
+.chart-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+.chart-labels span { font-size: 10px; color: var(--apple-text2); }
+.chart-legend { display: flex; gap: 16px; margin-top: 8px; }
+.chart-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--apple-text2); }
+.chart-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* PURCHASE PATHS — 구매 경로 */
+.paths-card {
+  background: var(--apple-white);
+  border-radius: 18px;
+  border: 1px solid var(--apple-border);
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+.paths-header {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--apple-border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.paths-header h2 { font-size: 17px; font-weight: 600; }
+.paths-tier-badge {
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 980px;
+}
+.tier-free { background: #F2F2F7; color: var(--apple-text2); }
+.tier-paid { background: var(--sage-light); color: var(--sage); }
+
+.path-item {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--apple-border);
+  display: flex; align-items: center; gap: 14px;
+  position: relative;
+}
+.path-item:last-child { border-bottom: none; }
+.path-rank {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.rank-1 { background: #FFD700; color: #5D4037; }
+.rank-2 { background: #E0E0E0; color: #424242; }
+.rank-3 { background: #FFCC80; color: #5D4037; }
+.path-info { flex: 1; }
+.path-store { font-size: 13px; font-weight: 600; color: var(--apple-text); }
+.path-detail { font-size: 12px; color: var(--apple-text2); margin-top: 2px; }
+.path-price { text-align: right; flex-shrink: 0; }
+.path-price .price-main { font-size: 17px; font-weight: 700; color: var(--apple-text); }
+.path-price .price-save { font-size: 11px; color: #34C759; font-weight: 600; }
+
+/* BLUR OVERLAY */
+.blur-section { position: relative; }
+.blur-content { filter: blur(3px); user-select: none; pointer-events: none; }
+.gray-bar { display:inline-block; background:#E5E5EA; border-radius:4px; vertical-align:middle; }
+.deal-tag { display:inline-block; font-size:11px; font-weight:600; padding:2px 7px; border-radius:6px; }
+.deal-tag-hot { background:#FFF3CD; color:#B45309; }
+.deal-tag-card { background:#EEF2FF; color:#4338CA; }
+.deal-tag-coupon { background:#F0FDF4; color:#166534; }
+.deal-tag-condition { display:inline-block; font-size:11px; color:#8E8E93; }
+.blur-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(2px);
+  border-radius: 0 0 18px 18px;
+  z-index: 10;
+  padding: 24px;
+  text-align: center;
+}
+.blur-overlay .lock-icon { font-size: 32px; margin-bottom: 10px; }
+.blur-overlay h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.blur-overlay p { font-size: 13px; color: var(--apple-text2); margin-bottom: 16px; line-height: 1.5; }
+
+/* BUTTONS */
+.btn-sage {
+  background: var(--sage);
+  color: #fff; border: none;
+  padding: 12px 28px; border-radius: 980px;
+  font-size: 15px; font-weight: 500;
+  font-family: var(--font); cursor: pointer;
+  transition: background 0.15s;
+  display: inline-block; text-decoration: none;
+}
+.btn-sage:hover { background: var(--sage-hover); }
+.btn-outline {
+  background: transparent;
+  color: var(--apple-blue); border: none;
+  padding: 8px 16px; border-radius: 980px;
+  font-size: 13px; font-weight: 500;
+  font-family: var(--font); cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-outline:hover { background: rgba(0,113,227,0.07); }
+
+/* CARD COMBINATIONS — 카드 조합 */
+.cards-list { display: flex; flex-direction: column; gap: 0; }
+.card-item {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--apple-border);
+  display: flex; align-items: center; gap: 12px;
+}
+.card-item:last-child { border-bottom: none; }
+.card-logo {
+  width: 36px; height: 24px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.card-info { flex: 1; }
+.card-name { font-size: 13px; font-weight: 600; }
+.card-desc { font-size: 12px; color: var(--apple-text2); margin-top: 1px; }
+.card-discount { font-size: 15px; font-weight: 700; color: var(--red); }
+
+/* VAT CALCULATOR */
+.vat-calc {
+  background: var(--apple-white);
+  border-radius: 18px;
+  border: 1px solid var(--apple-border);
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+.vat-body { padding: 20px 22px; }
+.vat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--apple-border); }
+.vat-row:last-child { border-bottom: none; }
+.vat-row .label { font-size: 14px; color: var(--apple-text2); }
+.vat-row .value { font-size: 15px; font-weight: 600; color: var(--apple-text); }
+.vat-row.highlight .value { color: #34C759; font-size: 18px; }
+.vat-input-row {
+  display: flex; gap: 10px; align-items: center;
+  padding: 16px 22px;
+  background: var(--apple-bg);
+}
+.vat-input-row input {
+  flex: 1; padding: 10px 14px;
+  border: 1px solid var(--apple-border); border-radius: 10px;
+  font-size: 15px; font-family: var(--font);
+  outline: none;
+}
+.vat-input-row input:focus { border-color: var(--sage); }
+
+/* EXPERT CONSULTATION */
+.expert-card {
+  background: linear-gradient(135deg, #1A7040 0%, #0D5C30 100%);
+  border-radius: 18px;
+  padding: 28px 24px;
+  color: #fff;
+  margin-bottom: 32px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+@media (max-width: 600px) { .expert-card { flex-direction: column; text-align: center; } }
+.expert-info h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.expert-info p { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.55; }
+.expert-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 980px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+.btn-white {
+  background: #fff; color: var(--sage);
+  border: none; padding: 12px 24px; border-radius: 980px;
+  font-size: 14px; font-weight: 600;
+  font-family: var(--font); cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.btn-white:hover { opacity: 0.9; }
+
+/* UPSELL BANNER */
+/* 중고 시장 카드 */
+.used-price-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #F2F2F7; }
+.used-price-row:last-child { border-bottom:none; }
+.used-store { font-size:14px; font-weight:600; color:var(--apple-text); }
+.used-price-val { font-size:14px; font-weight:700; color:var(--sage); }
+.used-pros-cons { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+.used-pros, .used-cons, .used-caution { border-radius:12px; padding:14px; }
+.used-pros { background:#E8F5EE; }
+.used-cons { background:#FFF3F2; }
+.used-caution { background:#FFF8E7; grid-column:1/-1; }
+.used-pros h4 { font-size:12px; font-weight:700; color:#1A7040; margin-bottom:8px; }
+.used-cons h4 { font-size:12px; font-weight:700; color:#FF3B30; margin-bottom:8px; }
+.used-caution h4 { font-size:12px; font-weight:700; color:#B8922A; margin-bottom:8px; }
+.used-pros li, .used-cons li, .used-caution li { font-size:12px; color:var(--apple-text2); margin-left:14px; margin-bottom:4px; list-style:disc; }
+
+.upsell-banner {
+  background: var(--apple-white);
+  border: 1.5px solid var(--sage);
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 32px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+@media (max-width: 600px) { .upsell-banner { flex-direction: column; } }
+.upsell-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.upsell-info p { font-size: 13px; color: var(--apple-text2); }
+.upsell-price { font-size: 22px; font-weight: 700; color: var(--sage); white-space: nowrap; }
+.upsell-price small { font-size: 13px; font-weight: 400; color: var(--apple-text2); }
+
+/* ANALYSIS FOOTER */
+.analysis-footer {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 12px;
+  color: var(--apple-text2);
+}
+.analysis-footer a { color: var(--apple-blue); text-decoration: none; }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+  z-index: 9998; align-items: center; justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--apple-white);
+  border-radius: 24px;
+  padding: 36px 32px;
+  width: min(480px, 92vw);
+  position: relative;
+  animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalIn { from { opacity:0; transform: scale(0.9) translateY(20px); } }
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--apple-bg); border: none; cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+}
+.modal h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.modal .modal-price { font-size: 32px; font-weight: 700; color: var(--sage); margin-bottom: 4px; }
+.modal .modal-desc { font-size: 14px; color: var(--apple-text2); margin-bottom: 20px; }
+.modal-features { list-style: none; margin-bottom: 24px; }
+.modal-features li { font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--apple-border); display: flex; align-items: center; gap: 8px; }
+.modal-features li:last-child { border-bottom: none; }
+.modal-features li::before { content: '✓'; color: var(--sage); font-weight: 700; }
+.modal input[type="email"] {
+  width: 100%; padding: 12px 16px;
+  border: 1px solid var(--apple-border); border-radius: 12px;
+  font-size: 15px; font-family: var(--font); outline: none;
+  margin-bottom: 12px;
+}
+.modal input[type="email"]:focus { border-color: var(--sage); }
+.modal .btn-modal { width: 100%; padding: 14px; font-size: 16px; border-radius: 12px; }
+.modal-note { text-align: center; font-size: 11px; color: var(--apple-text2); margin-top: 10px; }
+
+/* LOADING */
+.loading-screen {
+  position: fixed; inset: 0;
+  background: var(--apple-bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9000;
+}
+.loading-screen.hidden { display: none; }
+.loading-logo { font-size: 32px; font-weight: 700; color: var(--apple-text); margin-bottom: 24px; }
+.loading-logo span { color: var(--gold); }
+.progress-bar { width: 240px; height: 3px; background: var(--apple-border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--sage); border-radius: 2px; animation: progressAnim 2.5s ease-in-out forwards; }
+@keyframes progressAnim { 0%{width:0} 30%{width:40%} 70%{width:75%} 100%{width:100%} }
+.loading-step { font-size: 13px; color: var(--apple-text2); margin-top: 14px; animation: stepCycle 2.5s steps(3, end) forwards; }
+@keyframes stepCycle {
+  0%   { content: ''; }
+}
+.loading-steps-text { font-size: 13px; color: var(--apple-text2); margin-top: 14px; }
+.loading-wit { font-size: 15px; color: var(--apple-text); margin-top: 20px; font-weight: 500; min-height: 22px; text-align: center; max-width: 280px; opacity: 0; animation: witFade 0.5s ease forwards; }
+@keyframes witFade { to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">맥<span>도사</span></div>
+  <div class="progress-bar"><div class="progress-fill"></div></div>
+  <div class="loading-steps-text" id="loadingStep">30일 시세 분석 중...</div>
+  <div class="loading-wit" id="loadingWit"></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">맥<span>도사</span></a>
+    <a href="index.html" class="nav-back">← 새 분석</a>
+  </div>
+</nav>
+
+<main>
+  <!-- SAVE AMOUNT BAR -->
+  <div class="result-bar">
+    <div class="model-name" id="modelName">MacBook Pro 14" M4 · 24GB · 1TB</div>
+    <div class="save-amount" id="saveAmount">지금 사면 32만원 절약 가능</div>
+    <div id="priceBreakdown" style="display:none;align-items:center;justify-content:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
+      <span id="origPriceEl" style="font-size:15px;color:rgba(245,245,247,0.45);text-decoration:line-through;"></span>
+      <span style="color:rgba(245,245,247,0.4);font-size:13px;">→</span>
+      <span id="bestPriceEl" style="font-size:18px;font-weight:700;color:#34C759;"></span>
+      <span id="saveBadgeEl" style="background:#34C759;color:#000;font-size:12px;font-weight:700;padding:3px 10px;border-radius:980px;"></span>
+    </div>
+    <div class="save-label">절약할 수 있습니다 — 맥도사가 짚었습니다</div>
+  </div>
+
+  <div class="container">
+
+    <!-- 3축 분석 카드 -->
+    <div class="section-title">3축 분석</div>
+    <div class="tiandiren-grid">
+
+      <!-- 시세 — 30일 흐름 -->
+      <div class="tdr-card">
+        <div class="tdr-icon">시세</div>
+        <div class="tdr-label">// layer_1 · price_history</div>
+        <div class="tdr-title">30일 시세 흐름</div>
+        <div class="tdr-body" id="tianBody">지난 30일 최저가 1,890,000원. 현재 정가 대비 15% 이상 저렴한 시점이 총 8일 존재했습니다.</div>
+        <div class="tdr-value good" id="tianValue">지금이 저점</div>
+      </div>
+
+      <!-- 딜 — 현재 딜 -->
+      <div class="tdr-card">
+        <div class="tdr-icon">딜</div>
+        <div class="tdr-label">// layer_2 · deal_scanner</div>
+        <div class="tdr-title">지금 이 순간 딜</div>
+        <div class="tdr-body" id="diBody">하이마트 원데이딜 + 하나카드 7% 할인 조합 발견. 교육할인보다 실질 32만원 유리합니다.</div>
+        <div class="tdr-value good" id="diValue">원데이딜 발견</div>
+      </div>
+
+      <!-- 타이밍 — 구매 판단 -->
+      <div class="tdr-card">
+        <div class="tdr-icon">타이밍</div>
+        <div class="tdr-label">// layer_3 · timing_signal</div>
+        <div class="tdr-title">지금 살까, 기다릴까</div>
+        <div class="tdr-body" id="renBody">M5 출시는 최소 6개월 뒤 예상. 연말 세일보다 현재 딜이 더 유리합니다. 신제품 리스크 없음.</div>
+        <div class="tdr-value good" id="renValue">지금 구매 추천</div>
+      </div>
+
+    </div>
+
+    <!-- 맥도사 판단 -->
+    <div class="verdict-box" id="verdictBox">
+      <div class="verdict-icon">🧙‍♂️</div>
+      <div class="verdict-text">
+        <div class="verdict-badge" id="verdictBadge">지금 사세요</div>
+        <h3 id="verdictTitle">원데이딜 + 하나카드 조합, 지금이 최적입니다</h3>
+        <p id="verdictDesc">하이마트 원데이딜에 하나카드 7% 할인을 조합하면 교육할인보다 32만원 더 저렴합니다. 이 딜은 오늘까지만 유효합니다.</p>
+      </div>
+    </div>
+
+    <!-- 30일 가격 히스토리 차트 -->
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:4px;">가격 히스토리 (30일)</div>
+      <div style="font-size:12px;color:var(--apple-text2);">다나와 집계 기준 · MacBook Pro 14" M4 24GB 1TB</div>
+      <div class="chart-wrapper">
+        <div class="chart-bars" id="chartBars"></div>
+      </div>
+      <div class="chart-labels">
+        <span>30일 전</span><span>20일 전</span><span>10일 전</span><span>오늘</span>
+      </div>
+      <div class="chart-legend">
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#1A7040"></div>실거래가</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#E0E0E0"></div>정가</div>
+      </div>
+    </div>
+
+    <!-- 구매 경로 — FREE: 블러, 결제 후: 해제 -->
+    <div class="section-title">최적 구매 경로</div>
+    <div class="paths-card">
+      <div class="paths-header">
+        <h2>경로 분석 결과</h2>
+        <span class="paths-tier-badge" id="tierBadge" class="tier-free">FREE 분석</span>
+      </div>
+
+      <!-- FREE: 요약 1개만 보임 -->
+      <div class="path-item" id="path-preview">
+        <div class="path-rank rank-1">1</div>
+        <div class="path-info">
+          <div class="path-store">🏆 롯데하이마트 원데이딜</div>
+          <div class="path-detail">하나카드 + 부가세 환급 조합 시</div>
+        </div>
+        <div class="path-price">
+          <div class="price-main">1,450,627원</div>
+          <div class="price-save">32만원 절약</div>
+        </div>
+      </div>
+
+      <!-- 2,3위 경로 — 공개 -->
+      <div id="lockedPaths">
+        <div class="blur-content">
+          <div class="path-item">
+            <div class="path-rank rank-2">2</div>
+            <div class="path-info">
+              <div class="path-store"><span class="gray-bar" style="width:110px;height:14px"></span></div>
+              <div class="path-detail"><span class="gray-bar" style="width:80px;height:11px"></span></div>
+            </div>
+            <div class="path-price">
+              <div class="price-main"><span class="gray-bar" style="width:90px;height:14px"></span></div>
+              <div class="price-save"><span class="gray-bar" style="width:60px;height:11px"></span></div>
+            </div>
+          </div>
+          <div class="path-item">
+            <div class="path-rank rank-3">3</div>
+            <div class="path-info">
+              <div class="path-store"><span class="gray-bar" style="width:130px;height:14px"></span></div>
+              <div class="path-detail"><span class="gray-bar" style="width:70px;height:11px"></span></div>
+            </div>
+            <div class="path-price">
+              <div class="price-main"><span class="gray-bar" style="width:90px;height:14px"></span></div>
+              <div class="price-save"><span class="gray-bar" style="width:55px;height:11px"></span></div>
+            </div>
+          </div>
+          <div class="path-item" style="border:none;">
+            <div class="path-rank" style="background:#F2F2F7;color:#999;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">+</div>
+            <div class="path-info">
+              <div style="display:flex;gap:6px;margin-top:2px">
+                <span class="gray-bar" style="width:80px;height:11px"></span>
+                <span class="gray-bar" style="width:60px;height:11px"></span>
+                <span class="gray-bar" style="width:70px;height:11px"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+      <!-- 1위 구매링크 — 구독 전 블러 -->
+      <div id="buy-link-section" style="padding:12px 16px 4px;">
+        <div class="blur-section" id="buyLinkBlur">
+          <div class="blur-content">
+            <div style="background:#1A7040;border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:14px;font-weight:600;">
+              최저가로 바로 구매하기 →
+            </div>
+          </div>
+          <div class="blur-overlay" style="border-radius:12px;padding:10px;">
+            <div style="font-size:13px;font-weight:600;">🔗 1위 구매링크</div>
+            <button class="btn-sage" style="margin-top:6px;padding:6px 14px;font-size:12px;" onclick="openModal('one-time')">9,900원으로 잠금 해제</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 카드 조합 — LOCKED -->
+    <div class="section-title">카드 조합 할인</div>
+    <div class="paths-card">
+      <div class="paths-header">
+        <h2>최적 카드 조합</h2>
+        <span class="paths-tier-badge tier-free">ONE-TIME 이상</span>
+      </div>
+      <div class="blur-section">
+        <div class="blur-content">
+          <div class="cards-list">
+            <div class="card-item">
+              <div class="card-logo" style="background:#005BAC;">하나</div>
+              <div class="card-info">
+                <div class="card-name">하나카드 원큐</div>
+                <div class="card-desc">30만원 이상 결제 시 · 하이마트 전용</div>
+              </div>
+              <div class="card-discount">-7%</div>
+            </div>
+            <div class="card-item">
+              <div class="card-logo" style="background:#0046BE;">신한</div>
+              <div class="card-info">
+                <div class="card-name">신한 SOL트래블</div>
+                <div class="card-desc">해외직구 결제 시 전월실적 무관</div>
+              </div>
+              <div class="card-discount">-5%</div>
+            </div>
+            <div class="card-item">
+              <div class="card-logo" style="background:#E11B22;">KB</div>
+              <div class="card-info">
+                <div class="card-name">KB Pay 국민카드</div>
+                <div class="card-desc">쿠팡 Pay 연동 시 추가 캐시백</div>
+              </div>
+              <div class="card-discount">-3%</div>
+            </div>
+          </div>
+        </div>
+        <div class="blur-overlay" style="border-radius:0 0 18px 18px;">
+          <div class="lock-icon">💳</div>
+          <h3>카드 조합 상세 보기</h3>
+          <p>적용 조건·한도·스택 가능 여부까지 전부 공개</p>
+          <button class="btn-sage" onclick="openModal('one-time')">9,900원으로 잠금 해제 ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 중고 시장 참고 정보 -->
+    <div id="usedMarketSection" style="display:none">
+      <div class="section-title">이런 방법도 있어요 — 중고 시장</div>
+      <div style="background:#fff;border-radius:18px;padding:20px;border:1px solid var(--apple-border)">
+        <div id="usedMarketBody"></div>
+      </div>
+    </div>
+
+    <!-- 부가세 환급 계산기 — FREE 공개 (사업자 번호 입력은 잠금) -->
+    <div class="section-title">사업자라면 추가 절약 — 부가세 환급</div>
+    <div class="vat-calc" id="vatSection">
+      <!-- 가격 흐름 요약 (항상 보임) -->
+      <div style="background:#F0FBF4;border-radius:12px;padding:14px 16px;margin-bottom:12px;border:1px solid #C8EDD6;">
+        <div style="font-size:12px;color:#1A7040;font-weight:600;margin-bottom:8px;">💡 절약 흐름 요약</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;">
+          <span style="color:#666;" id="vatOrigPrice">정가 —</span>
+          <span style="color:#999;">→</span>
+          <span style="font-weight:600;" id="vatBestPrice">최적경로 —</span>
+          <span style="color:#999;">→ 사업자 VAT 환급 시</span>
+          <span style="color:#1A7040;font-weight:700;" id="vatFinalPrice">실질 부담 —</span>
+        </div>
+      </div>
+      <div class="blur-section">
+        <div class="blur-content">
+          <div class="vat-input-row">
+            <input type="text" placeholder="사업자 등록번호 입력 (예: 123-45-67890)" id="bizNum">
+            <button class="btn-sage" style="padding:10px 18px;font-size:13px;">계산</button>
+          </div>
+          <div class="vat-body">
+            <div class="vat-row"><span class="label">최적 구매가</span><span class="value" id="vatRow1">—</span></div>
+            <div class="vat-row"><span class="label">공급가 (VAT 제외)</span><span class="value" id="vatRow2">—</span></div>
+            <div class="vat-row"><span class="label">부가가치세 (10%)</span><span class="value" id="vatRow3">—</span></div>
+            <div class="vat-row highlight"><span class="label">환급 후 실질 부담</span><span class="value" id="vatRow4">—</span></div>
+          </div>
+        </div>
+        <div class="blur-overlay" style="border-radius:18px;">
+          <div class="lock-icon">🧾</div>
+          <h3>사업자 부가세 환급 계산기</h3>
+          <p>사업자번호 입력 시 정확한 환급액 계산</p>
+          <button class="btn-sage" onclick="openModal('one-time')">9,900원으로 잠금 해제 ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRO 전용: 전문가 상담 -->
+    <div id="expertSection">
+      <div class="expert-card" id="expertLocked">
+        <div class="expert-info">
+          <div class="expert-badge">PRO 전용</div>
+          <h3>맥도사에게 직접 물어보세요</h3>
+          <p>내 상황에 맞는 구매 전략, 할부 설계,<br>사업자 세팅까지 1:1 상담합니다.</p>
+        </div>
+        <button class="btn-white" onclick="openModal('pro-monthly')">Pro 시작 ›</button>
+      </div>
+    </div>
+
+    <!-- UPSELL: Pro 알림 -->
+    <div class="upsell-banner">
+      <div class="upsell-info">
+        <h3>가격 하락 알림 받기</h3>
+        <p>목표 가격 설정 시 도달하면 즉시 카카오 알림</p>
+      </div>
+      <div>
+        <div class="upsell-price">19,900<small>원/월</small></div>
+        <button class="btn-sage" style="margin-top:8px;padding:8px 18px;font-size:13px;" onclick="openModal('pro-monthly')">Pro 시작 ›</button>
+      </div>
+    </div>
+
+    <div id="reviewSection" style="background:#fff;border-radius:18px;padding:20px;border:1px solid #D2D2D7;margin-bottom:24px;display:none;">
+      <div style="font-size:13px;font-weight:600;color:#1A7040;margin-bottom:12px;">절약 성공! 한 줄 후기를 남겨주세요</div>
+      <input id="reviewComment" type="text" placeholder="예: 다나와+삼성카드 조합으로 28만원 아꼈어요!"
+        style="width:100%;padding:10px 14px;border:1px solid #D2D2D7;border-radius:10px;font-size:14px;margin-bottom:8px;">
+      <button onclick="submitReview()"
+        style="background:#1A7040;color:#fff;border:none;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;">
+        후기 남기기
+      </button>
+    </div>
+    <div id="reviewFeed" style="margin-bottom:24px;"></div>
+
+    <div class="analysis-footer">
+      분석 시각: <span id="analysisTime"></span> · 데이터 출처: 다나와, 네이버쇼핑, 롯데하이마트<br>
+      <a href="index.html">새 맥북 분석하기</a> · <a href="#">개인정보처리방침</a>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <h2 id="modalTitle">구매 경로 잠금 해제</h2>
+    <div class="modal-price" id="modalPrice">9,900원</div>
+    <div class="modal-desc" id="modalDesc">이 맥북에 대한 최적 구매 경로 1회 공개</div>
+    <ul class="modal-features" id="modalFeatures"></ul>
+    <input type="email" id="modalEmail" placeholder="이메일 입력 — 구매 경로 전송용">
+    <button class="btn-sage btn-modal" id="modalBtn" onclick="handlePayment()">결제하고 잠금 해제</button>
+    <div class="modal-note">🔒 토스페이먼츠 보안 결제 · 환불 정책 확인</div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const params = new URLSearchParams(location.search);
+const urlParam = params.get('url') || '';
+const tier = localStorage.getItem('macdosa_tier') || 'free';
+const purchaseToken = localStorage.getItem('macdosa_token');
+
+// 로딩 시퀀스 — API 응답 완료 후 결과 표시
+const loadingSteps = [
+  '30일 시세 분석 중...',
+  '현재 딜 스캔 중...',
+  '타이밍 계산 중...',
+  '최적 경로 조합 중...',
+  '맥도사 판단 완료 ✓'
+];
+const witMessages = [
+  '가격의 맥(脈)을 잡고 있습니다',
+  '지갑을 지켜드리는 중입니다',
+  '30일치 시세를 훑어보는 중...',
+  '카드사 약관도 다 읽었습니다',
+  '가장 싼 경로를 찾고 있어요',
+  '맥북 사기 전 꼭 거쳐야 할 단계',
+  '지금 저도 두근두근합니다',
+  '딜이 있으면 반드시 찾아냅니다',
+  '잠깐만요, 다나와도 보고 있어요',
+  '쿠팡 원데이딜 확인 중...'
+];
+let stepIdx = 0, witIdx = Math.floor(Math.random() * witMessages.length);
+const stepEl = $('loadingStep');
+const witEl = $('loadingWit');
+witEl.textContent = witMessages[witIdx];
+const stepTimer = setInterval(() => {
+  stepIdx = Math.min(stepIdx + 1, loadingSteps.length - 1);
+  stepEl.textContent = loadingSteps[stepIdx];
+  witIdx = (witIdx + 1) % witMessages.length;
+  witEl.style.animation = 'none';
+  witEl.offsetHeight;
+  witEl.style.animation = 'witFade 0.5s ease forwards';
+  witEl.textContent = witMessages[witIdx];
+}, 4000);
+
+async function fetchAndRender() {
+  if (!urlParam) {
+    clearInterval(stepTimer);
+    $('loadingScreen').classList.add('hidden');
+    initResult(null);
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: urlParam, token: purchaseToken || undefined })
+    });
+
+    clearInterval(stepTimer);
+    stepEl.textContent = '맥도사 판단 완료 ✓';
+
+    await new Promise(r => setTimeout(r, 400));
+    $('loadingScreen').classList.add('hidden');
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showError(err.error || '분석 중 오류가 발생했습니다.');
+      return;
+    }
+
+    const json = await res.json();
+    initResult(json.data, json.tier);
+
+  } catch (e) {
+    clearInterval(stepTimer);
+    $('loadingScreen').classList.add('hidden');
+    showError('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+  }
+}
+
+function showError(msg) {
+  document.querySelector('main').innerHTML = `
+    <div style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 22px;text-align:center;">
+      <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">분석 실패</h2>
+      <p style="font-size:15px;color:#6E6E73;margin-bottom:24px;">${msg}</p>
+      <a href="/" style="background:#1A7040;color:#fff;padding:12px 28px;border-radius:980px;text-decoration:none;font-size:15px;font-weight:500;">다시 시도하기</a>
+    </div>`;
+}
+
+fetchAndRender();
+
+function initResult(data, serverTier) {
+  $('analysisTime').textContent = new Date().toLocaleString('ko-KR');
+
+  const activeTier = serverTier || tier;
+  if (activeTier !== 'free') unlockPaths();
+
+  if (!data) {
+    renderChart([]);
+    return;
+  }
+
+  // 모델명 & 절약액
+  if (data.model) $('modelName').textContent = data.model;
+  if (data.saveAmount) $('saveAmount').textContent = `지금 사면 ${Math.round(data.saveAmount / 10000)}만원 절약 가능`;
+
+  // 가격 브레이크다운 (원가 → 최적가 → 절약)
+  const origP = data.currentPrice;
+  const bestP = data.paths?.[0]?.finalPrice || data.paths?.[0]?.price;
+  if (origP && bestP) {
+    const savedAmt = origP - bestP;
+    $('origPriceEl').textContent = `${origP.toLocaleString()}원`;
+    $('bestPriceEl').textContent = `${bestP.toLocaleString()}원`;
+    $('saveBadgeEl').textContent = `↓ ${Math.round(savedAmt/10000)}만원 절약`;
+    $('priceBreakdown').style.display = 'flex';
+    // VAT 흐름 업데이트
+    const vat = Math.round(bestP / 11);
+    const afterVat = bestP - vat;
+    $('vatOrigPrice') && ($('vatOrigPrice').textContent = `정가 ${origP.toLocaleString()}원`);
+    $('vatBestPrice') && ($('vatBestPrice').textContent = `최적 ${bestP.toLocaleString()}원`);
+    $('vatFinalPrice') && ($('vatFinalPrice').textContent = `실질 ${afterVat.toLocaleString()}원`);
+    $('vatRow1') && ($('vatRow1').textContent = `${bestP.toLocaleString()}원`);
+    $('vatRow2') && ($('vatRow2').textContent = `${(bestP - vat).toLocaleString()}원`);
+    $('vatRow3') && ($('vatRow3').textContent = `${vat.toLocaleString()}원`);
+    $('vatRow4') && ($('vatRow4').textContent = `${afterVat.toLocaleString()}원 (${Math.round(vat/10000)}만원 환급)`);
+  }
+
+
+  // 天地人 카드
+  if (data.tian) {
+    $('tianBody').textContent = data.tian.body || '';
+    const tv = $('tianValue');
+    tv.textContent = data.tian.value || '';
+    tv.className = 'tdr-value ' + (data.tian.status === 'good' ? 'good' : data.tian.status === 'warning' ? 'warning' : '');
+  }
+  if (data.di) {
+    $('diBody').textContent = data.di.body || '';
+    const dv = $('diValue');
+    dv.textContent = data.di.value || '';
+    dv.className = 'tdr-value ' + (data.di.status === 'good' ? 'good' : data.di.status === 'warning' ? 'warning' : '');
+  }
+  if (data.ren) {
+    $('renBody').textContent = data.ren.body || '';
+    const rv = $('renValue');
+    rv.textContent = data.ren.value || '';
+    rv.className = 'tdr-value ' + (data.ren.status === 'good' ? 'good' : data.ren.status === 'warning' ? 'warning' : '');
+  }
+
+  // 최종 판단
+  if (data.verdict) {
+    $('verdictTitle').textContent = data.verdict.title || '';
+    $('verdictDesc').textContent = data.verdict.desc || '';
+    const badge = $('verdictBadge');
+    if (data.verdict.buy) {
+      badge.textContent = '지금 사세요';
+      badge.className = 'verdict-badge';
+    } else {
+      badge.textContent = '기다리세요';
+      badge.className = 'verdict-badge warning-badge';
+    }
+  }
+
+  // 구매 경로 렌더링
+  window._pathsData = data.paths || [];
+  if (data.paths && data.paths.length > 0) {
+    const first = data.paths[0];
+    const preview = $('path-preview');
+    if (preview) {
+      preview.querySelector('.path-store').textContent = `🏆 ${first.store}`;
+      // 딜 배지 생성
+      let detailHtml = '';
+      if (first.dealType && first.dealType !== '기본가') detailHtml += `<span class="deal-tag deal-tag-hot">${first.dealType}</span>`;
+      if (first.cardName) detailHtml += `<span class="deal-tag deal-tag-card">💳 ${first.cardName}${first.discountRate ? ' ' + first.discountRate : ''}</span>`;
+      if (first.couponInfo) detailHtml += `<span class="deal-tag deal-tag-coupon">🎟 ${first.couponInfo}</span>`;
+      if (first.condition) detailHtml += `<span class="deal-tag-condition">${first.condition}</span>`;
+      preview.querySelector('.path-detail').innerHTML = detailHtml || first.detail || '';
+      const finalP = first.finalPrice || first.price;
+      preview.querySelector('.price-main').textContent = finalP ? `${finalP.toLocaleString()}원` : '';
+      preview.querySelector('.price-save').textContent = first.saveAmount ? `${Math.round(first.saveAmount / 10000)}만원 절약` : '';
+    }
+    // 2위, 3위 경로 — 잠긴 영역에 실제 데이터 저장 (잠금 해제 시 노출)
+    renderLockedPaths(data.paths.slice(1));
+  }
+
+  // 중고 시장 섹션
+  if (data.usedMarket) renderUsedMarket(data.usedMarket, data.currentPrice);
+
+  // 가격 히스토리 차트
+  renderChart(data.priceHistory || []);
+
+  // 부가세 환급액 표시
+  if (data.vatRefund) {
+    const vatRows = document.querySelectorAll('.vat-row');
+    if (vatRows.length >= 4) {
+      vatRows[3].querySelector('.value').textContent = `+${data.vatRefund.toLocaleString()}원 ↑`;
+    }
+  }
+}
+
+// 중고 시장 참고 정보
+function renderUsedMarket(used, newPrice) {
+  const section = document.getElementById('usedMarketSection');
+  const body = document.getElementById('usedMarketBody');
+  if (!section || !body || !used) return;
+
+  const channels = [
+    { key: 'macmuseum', label: '맥뮤지엄', desc: '(전문점·보증 있음)' },
+    { key: 'daangn',    label: '당근마켓',  desc: '(개인 직거래)' },
+    { key: 'joongna',   label: '중고나라/번개장터', desc: '(개인 판매)' },
+    { key: 'appleRefurb', label: '애플 공인 리퍼', desc: '(애플 보증)' },
+  ];
+
+  let rows = channels
+    .filter(c => used[c.key])
+    .map(c => `<div class="used-price-row">
+      <span class="used-store">${c.label} <span style="font-size:11px;color:var(--apple-text2)">${c.desc}</span></span>
+      <span class="used-price-val">${used[c.key]}</span>
+    </div>`).join('');
+
+  if (used.priceRange) rows += `<div class="used-price-row">
+    <span class="used-store">실거래 범위</span>
+    <span class="used-price-val">${used.priceRange}</span>
+  </div>`;
+
+  if (used.vsNewRatio) rows += `<div class="used-price-row">
+    <span class="used-store">신품 대비</span>
+    <span class="used-price-val" style="color:var(--apple-blue)">${used.vsNewRatio}</span>
+  </div>`;
+
+  body.innerHTML = `
+    ${rows}
+    <div class="used-pros-cons">
+      <div class="used-pros">
+        <h4>✅ 장점</h4>
+        <ul>
+          <li>신품 대비 20~35% 저렴</li>
+          <li>단종 모델도 구할 수 있음</li>
+          <li>맥뮤지엄 등 전문점은 점검·보증 제공</li>
+        </ul>
+      </div>
+      <div class="used-cons">
+        <h4>⚠️ 단점</h4>
+        <ul>
+          <li>배터리 사이클·상태 직접 확인 전까지 미지수</li>
+          <li>개인 거래 시 AS·환불 보장 없음</li>
+          <li>동일 스펙인지 실물 확인 필요</li>
+        </ul>
+      </div>
+      <div class="used-caution">
+        <h4>📋 구매 전 반드시 확인하세요</h4>
+        <ul>
+          <li>시리얼 번호로 애플 정품 확인 (checkcoverage.apple.com)</li>
+          <li>배터리 잔량 — 시스템 정보에서 직접 확인 (80% 이하면 협상)</li>
+          <li>iCloud 로그아웃·초기화 여부 확인 (활성화 잠금 주의)</li>
+          <li>직거래 시 카페·공공장소에서 만나기</li>
+          <li>${used.recommendation || '전문 중고점(맥뮤지엄)이 신뢰도 가장 높음'}</li>
+        </ul>
+      </div>
+    </div>`;
+
+  section.style.display = 'block';
+}
+
+// 30일 가격 히스토리 차트
+function renderChart(apiPrices) {
+  const container = $('chartBars');
+  const fallback = [
+    2350,2340,2360,2380,2390,2410,2400,2380,2360,2340,
+    2320,2310,2300,2290,2310,2330,2350,2340,2320,2310,
+    2290,2280,2270,2250,2240,2230,2220,2210,2200,2190
+  ];
+  const raw = (apiPrices && apiPrices.length >= 7) ? apiPrices : fallback;
+  const prices = raw.map(v => v < 100000 ? v * 10000 : v);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+
+  prices.forEach((p, i) => {
+    const pct = ((p - min) / (max - min)) * 60 + 30;
+    const isToday = i === prices.length - 1;
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar';
+    bar.style.height = pct + '%';
+    bar.style.background = isToday ? '#1A7040' : (p === min ? '#34C759' : '#D2D2D7');
+    bar.innerHTML = `<div class="tooltip">${(p / 10000).toFixed(0)}만원</div>`;
+    container.appendChild(bar);
+  });
+}
+
+function buildDealTags(p) {
+  let t = '';
+  if (p.dealType && p.dealType !== '기본가') t += `<span class="deal-tag deal-tag-hot">${p.dealType}</span>`;
+  if (p.cardName) t += `<span class="deal-tag deal-tag-card">💳 ${p.cardName}${p.discountRate ? ' ' + p.discountRate : ''}</span>`;
+  if (p.couponInfo) t += `<span class="deal-tag deal-tag-coupon">🎟 ${p.couponInfo}</span>`;
+  if (p.condition) t += `<span class="deal-tag-condition">${p.condition}</span>`;
+  return t || p.detail || '';
+}
+
+function renderLockedPaths(paths) {
+  const container = $('lockedPaths')?.querySelector('.blur-content');
+  if (!container || !paths.length) return;
+  const ranks = [2, 3, 4];
+  const rankColors = ['#FFD60A', '#FF9F0A', '#8E8E93'];
+  container.innerHTML = paths.slice(0, 3).map((p, i) => {
+    const finalP = p.finalPrice || p.price;
+    return `<div class="path-item">
+      <div class="path-rank" style="background:${rankColors[i]};color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">${ranks[i]}</div>
+      <div class="path-info">
+        <div class="path-store">${p.store}</div>
+        <div class="path-detail" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px">${buildDealTags(p)}</div>
+      </div>
+      <div class="path-price">
+        <div class="price-main">${finalP ? finalP.toLocaleString() + '원' : ''}</div>
+        <div class="price-save">${p.saveAmount ? Math.round(p.saveAmount/10000) + '만원 절약' : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// 결제 완료 후 블러 섹션 전체 해제 + 1위 구매링크 활성화
+function unlockPaths() {
+  const badge = $('tierBadge');
+  if (badge) {
+    badge.textContent = 'ONE-TIME 해제';
+    badge.className = 'paths-tier-badge tier-paid';
+  }
+  document.querySelectorAll('.blur-section').forEach(section => {
+    const content = section.querySelector('.blur-content');
+    const overlay = section.querySelector('.blur-overlay');
+    if (content) content.style.filter = 'none';
+    if (overlay) overlay.style.display = 'none';
+  });
+  // 1위 구매링크 블러 해제 + 실제 링크 연결
+  const buyBlur = $('buyLinkBlur');
+  if (buyBlur && urlParam) {
+    buyBlur.innerHTML = `<a href="${urlParam}" target="_blank" rel="noopener"
+      style="display:block;text-align:center;background:#1A7040;color:#fff;border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-decoration:none;">
+      최저가로 바로 구매하기 →
+    </a>`;
+  }
+  // 결제 후 후기 섹션 노출
+  const reviewSec = document.getElementById('reviewSection');
+  if (reviewSec) reviewSec.style.display = 'block';
+}
+
+const MODAL_CONFIG = {
+  'one-time': {
+    title: '구매 경로 잠금 해제',
+    price: '9,900원',
+    desc: '이 맥북의 최적 구매 경로 전체를 잠금 해제합니다. 카드 조합·직접 링크·세금계산서까지.',
+    features: ['구매 경로 전체 공개 (TOP 3)', '카드 조합 상세 안내', '세금계산서 가이드', '부가세 환급 계산기'],
+    btnText: '9,900원 결제하기',
+    payType: 'ONETIME'
+  },
+  'pro-monthly': {
+    title: 'Pro 월간 구독',
+    price: '19,900원/월',
+    desc: '모든 맥북 구매 경로 무제한 잠금 해제 + 실시간 가격 하락 알림 + 전문가 상담.',
+    features: ['무제한 맥북 분석', '가격 하락 실시간 알림', '원데이딜 선점 알림', '전문가 1:1 상담 월 1회'],
+    btnText: 'Pro 시작하기',
+    payType: 'SUBSCRIPTION_MONTHLY'
+  },
+  'pro-annual': {
+    title: 'Pro 연간 구독',
+    price: '99,000원/년',
+    desc: '월 8,250원 · 19,900원 대비 58% 할인',
+    features: ['모든 Pro 기능 포함', '전문가 상담 월 2회', '우선 지원', '연간 맥북 시장 리포트'],
+    btnText: '연간 구독 시작 (58% 할인)',
+    payType: 'SUBSCRIPTION_ANNUAL'
+  }
+};
+
+function openModal(type) {
+  const cfg = MODAL_CONFIG[type];
+  const btn = $('modalBtn');
+  $('modalTitle').textContent = cfg.title;
+  $('modalPrice').textContent = cfg.price;
+  $('modalDesc').textContent = cfg.desc;
+  btn.textContent = cfg.btnText;
+  btn.dataset.payType = cfg.payType;
+  $('modalFeatures').innerHTML = cfg.features.map(f => `<li>${f}</li>`).join('');
+  $('modalOverlay').classList.add('active');
+  track('modal_open', { type });
+}
+
+function closeModal(e) {
+  if (e.target === $('modalOverlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  $('modalOverlay').classList.remove('active');
+}
+
+// 공통 잠금 해제 — betaAccess/beta 모드 모두 이 함수로 통일
+function applyUnlock(email, payType, { token, toast, eventName }) {
+  localStorage.setItem('macdosa_tier', 'paid');
+  localStorage.setItem('macdosa_email', email);
+  if (token) {
+    localStorage.setItem('macdosa_token', token);
+  } else {
+    localStorage.setItem('macdosa_beta_log', JSON.stringify({
+      email, payType, url: urlParam, time: new Date().toISOString()
+    }));
+  }
+  closeModalDirect();
+  unlockPaths();
+  showToast(toast);
+  track(eventName, { payType, email });
+}
+
+function betaUnlock(email, payType) {
+  applyUnlock(email, payType, {
+    toast: '✅ 전체 경로가 열렸습니다! 스크롤해서 확인하세요',
+    eventName: 'unlock_complete'
+  });
+}
+
+async function handlePayment() {
+  const email = $('modalEmail').value;
+  const payType = $('modalBtn').dataset.payType;
+
+  if (!email || !email.includes('@')) {
+    $('modalEmail').style.borderColor = '#FF3B30';
+    return;
+  }
+
+  const btn = $('modalBtn');
+  btn.textContent = '처리 중...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/payment/initiate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, payType, url: urlParam })
+    });
+
+    if (!res.ok) return betaUnlock(email, payType);
+
+    const data = await res.json();
+    if (data.tossUrl) {
+      window.location.href = data.tossUrl;
+    } else if (data.betaAccess) {
+      // 토큰 저장 후 페이지 재로드 → 유료 tier로 재분석
+      localStorage.setItem('macdosa_tier', 'paid');
+      localStorage.setItem('macdosa_email', email);
+      localStorage.setItem('macdosa_token', data.token);
+      showToast('✅ 전체 경로가 열렸습니다! 스크롤해서 확인하세요');
+      setTimeout(() => window.location.reload(), 3000);
+    }
+  } catch {
+    betaUnlock(email, payType);
+  }
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+    background:#1D1D1F;color:#fff;padding:12px 24px;border-radius:980px;
+    font-size:14px;z-index:99999;animation:fadeUp 0.3s ease;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// 최근 100개 이벤트만 유지 (localStorage 용량 보호)
+function track(event, data = {}) {
+  const log = JSON.parse(localStorage.getItem('macdosa_events') || '[]');
+  log.push({ event, data, time: new Date().toISOString(), page: 'result' });
+  localStorage.setItem('macdosa_events', JSON.stringify(log.slice(-100)));
+}
+
+track('result_view', { url: urlParam, tier });
+
+// 후기 제출
+async function submitReview() {
+  const comment = document.getElementById('reviewComment').value;
+  if (!comment || comment.length < 5) return;
+  const modelName = document.getElementById('modelName')?.textContent || '';
+  await fetch('/api/review', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ model: modelName, comment, tier: localStorage.getItem('macdosa_tier') || 'free' })
+  });
+  document.getElementById('reviewSection').style.display = 'none';
+  showToast('후기 감사합니다! 🎉');
+  loadReviews();
+}
+
+// 후기 피드 로드
+async function loadReviews() {
+  const res = await fetch('/api/reviews');
+  const { reviews } = await res.json();
+  const feed = document.getElementById('reviewFeed');
+  if (!feed || !reviews.length) return;
+  feed.innerHTML = '<div style="font-size:13px;font-weight:600;color:#6E6E73;margin-bottom:8px;">최근 구매 후기</div>' +
+    reviews.map(r => `<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1px solid #D2D2D7;margin-bottom:8px;font-size:13px;">
+      <span style="color:#1A7040;font-weight:600;">${r.model || '맥북'}</span>
+      <span style="color:#6E6E73;font-size:12px;margin-left:8px;">${r.createdAt?.slice(0,10) || ''}</span>
+      <div style="margin-top:4px;color:#1D1D1F;">${r.comment}</div>
+    </div>`).join('');
+}
+loadReviews();
+</script>
+
+<!-- 카카오 SDK -->
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
+
+<style>
+/* ── FAB 그룹 ── */
+.fab-group {
+  position: fixed; bottom: 28px; right: 28px; z-index: 9000;
+  display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+}
+
+/* FAB 래퍼 — 툴팁 포지셔닝 기준 */
+.fab-wrap { position: relative; display: flex; align-items: center; }
+
+.fab-btn {
+  width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.22); transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.fab-btn:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(0,0,0,0.28); }
+.fab-kakao { background: #FEE500; color: #000; }
+.fab-feedback { background: #1A7040; color: #fff; }
+
+/* FAB 툴팁 말풍선 */
+.fab-tooltip {
+  position: absolute; right: 58px; top: 50%;
+  transform: translateY(-50%) translateX(6px);
+  background: #1D1D1F; color: #F5F5F7;
+  font-size: 12px; font-weight: 500; white-space: nowrap;
+  padding: 6px 12px; border-radius: 980px;
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+}
+.fab-tooltip::after {
+  content: '';
+  position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-left-color: #1D1D1F;
+}
+.fab-wrap:hover .fab-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+.fab-tooltip strong { color: #34C759; font-weight: 700; }
+
+/* ── 피드백 팝업 ── */
+#fbPopup {
+  display: none;
+  position: fixed; bottom: 92px; right: 28px; z-index: 9001;
+  width: 320px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.06),
+    0 8px 24px rgba(0,0,0,0.10),
+    0 24px 56px rgba(0,0,0,0.12);
+  padding: 20px 18px 18px;
+  transform-origin: bottom right;
+}
+#fbPopup.open {
+  display: block;
+  animation: popIn 0.28s cubic-bezier(0.34,1.4,0.64,1);
+}
+@keyframes popIn {
+  from { opacity:0; transform: scale(0.88) translateY(12px); }
+  to   { opacity:1; transform: scale(1)    translateY(0);    }
+}
+
+/* 팝업 헤더 */
+.fb-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.fb-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: #E8F5EE; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+#fbPopup h4 { font-size: 14px; font-weight: 700; color: #1D1D1F; margin: 0; }
+
+#fbPopup p { font-size: 12px; color: #6E6E73; margin: 0 0 12px; line-height: 1.55; }
+#fbPopup p strong { color: #1A7040; }
+
+/* 텍스트에리어 */
+#fbText {
+  width: 100%; box-sizing: border-box; height: 88px;
+  border: 1.5px solid #E5E5EA; border-radius: 12px;
+  padding: 10px 12px; font-size: 13px; resize: none;
+  font-family: inherit; outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  color: #1D1D1F; background: #FAFAFA;
+}
+#fbText:focus { border-color: #1A7040; background: #fff; }
+#fbText::placeholder { color: #AEAEB2; }
+
+/* 프로그레스바 + 글자수 행 */
+.fb-progress-row {
+  display: flex; align-items: center; gap: 10px; margin: 8px 0 12px;
+}
+.fb-progress-track {
+  flex: 1; height: 4px; background: #E5E5EA; border-radius: 980px; overflow: hidden;
+}
+.fb-progress-fill {
+  height: 100%; width: 0%; border-radius: 980px;
+  background: linear-gradient(90deg, #1A7040 0%, #34C759 100%);
+  transition: width 0.18s ease, background 0.3s;
+}
+.fb-progress-fill.complete { background: linear-gradient(90deg, #34C759 0%, #30D158 100%); }
+#fbCount { font-size: 11px; color: #8E8E93; white-space: nowrap; transition: color 0.2s; min-width: 64px; text-align: right; }
+#fbCount.done { color: #1A7040; font-weight: 600; }
+
+/* 제출 버튼 */
+#fbSubmit {
+  width: 100%; border: none; border-radius: 12px;
+  padding: 11px; font-size: 14px; font-weight: 600;
+  font-family: inherit; cursor: pointer;
+  background: #1A7040; color: #fff;
+  transition: background 0.15s, opacity 0.15s, transform 0.1s;
+}
+#fbSubmit:not(:disabled):hover { background: #148038; transform: translateY(-1px); }
+#fbSubmit:not(:disabled):active { transform: translateY(0); }
+#fbSubmit:disabled { opacity: 0.38; cursor: not-allowed; }
+
+/* 완료 상태 */
+#fbDone { display: none; text-align: center; padding: 10px 0 4px; }
+#fbDone .fd-emoji { font-size: 34px; display: block; margin-bottom: 8px; }
+#fbDone .fd-msg { font-size: 14px; font-weight: 700; color: #1D1D1F; }
+#fbDone .fd-sub { font-size: 12px; color: #34C759; font-weight: 600; margin-top: 4px; }
+</style>
+
+<!-- FAB 그룹 -->
+<div class="fab-group">
+  <div class="fab-wrap">
+    <span class="fab-tooltip">카카오톡으로 공유하기</span>
+    <button class="fab-btn fab-kakao" onclick="shareKakao()" title="카카오톡 공유">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#000"><path d="M12 3C6.48 3 2 6.73 2 11.3c0 2.87 1.87 5.4 4.7 6.84l-.96 3.55 4.1-2.7c.7.1 1.43.16 2.16.16 5.52 0 10-3.73 10-8.35S17.52 3 12 3z"/></svg>
+    </button>
+  </div>
+  <div class="fab-wrap">
+    <span class="fab-tooltip">개선 제안하면 <strong>+2회</strong></span>
+    <button class="fab-btn fab-feedback" onclick="toggleFb()" title="개선 제안하기">💬</button>
+  </div>
+</div>
+
+<div id="fbPopup">
+  <div id="fbForm">
+    <div class="fb-header">
+      <div class="fb-icon">💡</div>
+      <h4>맥도사 개선 제안</h4>
+    </div>
+    <p>솔직하게 써주실수록 빨리 좋아져요.<br>10자 이상 작성 시 오늘 분석 <strong>+2회</strong> 즉시 지급!</p>
+    <textarea id="fbText" placeholder="불편한 점, 원하는 기능을 알려주세요..." oninput="onFbInput()"></textarea>
+    <div class="fb-progress-row">
+      <div class="fb-progress-track"><div class="fb-progress-fill" id="fbProgressFill"></div></div>
+      <div id="fbCount">0 / 10자</div>
+    </div>
+    <button id="fbSubmit" onclick="submitFb()" disabled>제출하기</button>
+  </div>
+  <div id="fbDone">
+    <div class="fd-emoji">🎁</div>
+    <div class="fd-msg" id="fdMsg"></div>
+    <div class="fd-sub" id="fdSub"></div>
+  </div>
+</div>
+
+<script>
+// 카카오 공유
+function shareKakao() {
+  const shareText = $('saveAmount')?.textContent || '맥북 최저가 분석';
+  const shareUrl = location.href;
+  if (navigator.share) {
+    navigator.share({ title: '맥도사 분석 결과', text: shareText, url: shareUrl });
+    return;
+  }
+  // fallback: 클립보드 복사
+  navigator.clipboard.writeText(shareUrl).then(() => showToast('링크가 복사됐습니다!')).catch(() => showToast('URL: ' + shareUrl));
+  return;
+  // 아래는 카카오 앱키 발급 후 활성화
+  if (!window.Kakao) { alert('카카오 SDK 로드 중입니다.'); return; }
+  if (!Kakao.isInitialized()) Kakao.init('YOUR_KAKAO_APP_KEY');
+  const model = document.getElementById('modelName')?.textContent || '맥북';
+  const save  = document.getElementById('saveAmount')?.textContent || '';
+  Kakao.Share.sendDefault({
+    objectType: 'feed',
+    content: {
+      title: '맥북 살 때 이거 안 쓰면 손해예요',
+      description: `URL 붙여넣기 하나로 30일 시세·최저가·구매 타이밍까지. ${save}`,
+      imageUrl: 'https://macdosa.kr/og-image.png',
+      link: { mobileWebUrl: location.href, webUrl: location.href }
+    },
+    buttons: [{ title: '분석 결과 보기', link: { mobileWebUrl: location.href, webUrl: location.href } }]
+  });
+}
+
+// 피드백 팝업 — 열 때마다 폼 리셋
+function toggleFb() {
+  const pop = document.getElementById('fbPopup');
+  const isOpen = pop.classList.contains('open');
+  if (!isOpen) {
+    // 팝업 열릴 때 항상 폼 초기화
+    const fbForm = document.getElementById('fbForm');
+    const fbDone = document.getElementById('fbDone');
+    const fbText = document.getElementById('fbText');
+    const fbSubmit = document.getElementById('fbSubmit');
+    if (fbForm) fbForm.style.display = 'block';
+    if (fbDone) fbDone.style.display = 'none';
+    if (fbText) fbText.value = '';
+    if (fbSubmit) { fbSubmit.disabled = true; fbSubmit.textContent = '제출하기'; }
+    // 오늘 보너스 이미 받았으면 안내
+    fetch('/api/bonus').then(r => r.json()).then(d => {
+      const cnt = document.getElementById('fbCount');
+      if (cnt && d.totalGranted > 0) cnt.textContent = `오늘 보너스 +${d.totalGranted}회 이미 지급됨`;
+    }).catch(() => {});
+  }
+  pop.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const pop = document.getElementById('fbPopup');
+  const btn = document.querySelector('.fab-feedback');
+  if (pop && !pop.contains(e.target) && e.target !== btn && !btn.contains(e.target)) pop.classList.remove('open');
+});
+function onFbInput() {
+  const MAX = 200;
+  const len = document.getElementById('fbText').value.length;
+  const cnt = document.getElementById('fbCount');
+  const fill = document.getElementById('fbProgressFill');
+
+  // 글자수 텍스트 + 색상
+  if (len >= 10) {
+    cnt.textContent = `${len}자 ✓`;
+    cnt.classList.add('done');
+  } else {
+    cnt.textContent = `${len} / 10자`;
+    cnt.classList.remove('done');
+  }
+
+  // 프로그레스바 — 0~10자: 0~100%, 10자 이상: 완료 색상 유지
+  const pct = Math.min((len / MAX) * 100, 100);
+  fill.style.width = pct + '%';
+  if (len >= 10) fill.classList.add('complete');
+  else fill.classList.remove('complete');
+
+  document.getElementById('fbSubmit').disabled = len < 10;
+}
+async function submitFb() {
+  const content = document.getElementById('fbText').value;
+  const sub = document.getElementById('fbSubmit');
+  sub.textContent = '제출 중...'; sub.disabled = true;
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ content, email: localStorage.getItem('macdosa_email') || null })
+    });
+    const data = await res.json();
+    document.getElementById('fbForm').style.display = 'none';
+    document.getElementById('fbDone').style.display = 'block';
+    document.getElementById('fdMsg').textContent = data.message || '감사합니다!';
+    document.getElementById('fdSub').textContent = data.bonusGranted > 0 ? '오늘 분석 2회 추가 완료 🎉' : '';
+    setTimeout(() => document.getElementById('fbPopup').classList.remove('open'), 3500);
+  } catch { sub.textContent = '제출하기'; sub.disabled = false; }
+}
+</script>
+</body>
+</html>
