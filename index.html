@@ -1105,12 +1105,36 @@ window.addEventListener('scroll', () => {
   });
 }, { passive: true });
 
+/* ── 검색결과 URL 감지 ── */
+function isSearchResultUrl(url) {
+  return /search\.shopping\.naver\.com\/search\/|search\.naver\.com\/search|coupang\.com\/np\/search|search\.danawa\.com|danawa\.com\/search\?|query=|[?&]q=/.test(url);
+}
+
+function showUrlWarning(msg) {
+  let toast = document.getElementById('urlWarningToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'urlWarningToast';
+    toast.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#B91C1C;color:#fff;padding:14px 24px;border-radius:12px;font-size:15px;font-weight:600;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,0.4);max-width:90vw;text-align:center;transition:opacity 0.3s';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+}
+
 /* ── 분석 시작 → result 페이지로 이동 ── */
 function startAnalysis() {
   const url = document.getElementById('heroInput').value.trim();
   if (!url) {
     document.getElementById('heroInput').focus();
     document.getElementById('heroInput').placeholder = '← URL을 먼저 붙여넣어 주세요';
+    return;
+  }
+  if (isSearchResultUrl(url)) {
+    showUrlWarning('검색결과 페이지 말고, 상품 상세 페이지 URL을 넣어주세요 🙏');
+    document.getElementById('heroInput').focus();
     return;
   }
   track('analysis_started', { url });
