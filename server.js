@@ -22,9 +22,12 @@ if (existsSync(envPath)) {
 }
 const app = express();
 const PORT = process.env.PORT || 3000;
-const TOSS_CLIENT_KEY = process.env.TOSS_CLIENT_KEY || 'test_ck_placeholder';
-const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY || 'test_sk_placeholder';
-const IS_BETA = TOSS_SECRET_KEY === 'test_sk_placeholder';
+const TOSS_CLIENT_KEY = process.env.TOSS_CLIENT_KEY;
+const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY;
+if (!TOSS_CLIENT_KEY || !TOSS_SECRET_KEY) {
+  console.warn('⚠️  TOSS 키 없음 — 결제 기능 비활성화 (베타 모드)');
+}
+const IS_BETA = !TOSS_SECRET_KEY;
 
 if (!process.env.ADMIN_TOKEN) {
   console.error('❌ ADMIN_TOKEN 환경변수가 없습니다. .env 파일을 확인하세요.');
@@ -65,27 +68,165 @@ app.use((req, res, next) => {
 async function searchNaverShopping(query) {
   const clientId = process.env.NAVER_CLIENT_ID;
   const clientSecret = process.env.NAVER_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
+  if (!clientId || !clientSecret) { console.warn('⚠️ NAVER API 미설정'); return []; }
   try {
-    const url = `https://openapi.naver.com/v1/search/shop.json?query=${encodeURIComponent(query)}&display=10&sort=lprice`;
+    const url = `https://openapi.naver.com/v1/search/shop.json?query=${encodeURIComponent(query)}&display=50&sort=lprice`;
     const res = await fetch(url, {
       headers: { 'X-Naver-Client-Id': clientId, 'X-Naver-Client-Secret': clientSecret },
       signal: AbortSignal.timeout(5000)
     });
-    if (!res.ok) return null;
+    if (!res.ok) { console.error(`네이버 API ${res.status}`); return []; }
     const data = await res.json();
-    return data.items || [];
+    return (data.items || []).map(i => ({
+      title: i.title.replace(/<[^>]*>/g, ''),
+      price: parseInt(i.lprice),
+      link: i.link,
+      mall: i.mallName,
+      source: 'naver'
+    })).filter(i => i.price > 1000).sort((a,b) => a.price - b.price);
   } catch (e) {
-    console.error('네이버 쇼핑 API 오류:', e.message);
-    return null;
+    console.error('❌ 네이버 쇼핑 오류:', e.message);
+    return [];
   }
 }
 
-// 제목에서 맥북 모델 검색 쿼리 추출
-function extractMacModelQuery(title) {
-  if (!title || title === '스크랩 실패') return '맥북';
+// 쿠팡 검색 + 직접 URL 처리
+async function searchCoupang(query) {
+  // 쿠팡 URL 직접 입력 감지
+  const coupangUrlMatch = query.match(/coupang\.com\/vp\/products\/(\d+)/);
+  if (coupangUrlMatch) {
+    const productId = coupangUrlMatch[1];
+    try {
+      const res = await fetch(`https://www.coupang.com/vp/products/${productId}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const titleMatch = html.match(/"name"\s*:\s*"([^"]+)"/) || html.match(/<h2[^>]*>([^<]+)<\/h2>/);
+        const priceMatch = html.match(/"lowestPrice"\s*:\s*(\d+)/) || html.match(/"deliveryFee"\s*:\s*(\d+)/);
+        if (titleMatch && priceMatch) {
+          return [{ title: titleMatch[1], price: parseInt(priceMatch[1]), link: query, mall: '쿠팡', source: 'coupang' }];
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ 쿠팡 직접 URL 파싱 실패:', e.message);
+    }
+  }
+
+  try {
+    const res = await fetch(`https://www.coupang.com/np/search?q=${encodeURIComponent(query)}&channel=search&sorter=scoreDesc`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const items = [];
+    const matches = html.match(/"productId"\s*:\s*"?(\d+)"?[^}]*?(?:"displayName"|"name")\s*:\s*"([^"]+)"[^}]*?"(?:lowestPrice|deliveryFee)"\s*:\s*(\d+)/g) || [];
+    const priceMatches = html.match(/"productId"\s*:\s*"?(\d+)"?[^}]*?"price"\s*:\s*(\d+)/g) || [];
+    matches.slice(0, 5).forEach(m => {
+      const [,pid,name,price] = m.match(/"productId"\s*:\s*"?(\d+)"?[^}]*?(?:"displayName"|"name")\s*:\s*"([^"]+)"[^}]*?"(?:lowestPrice|price)"\s*:\s*(\d+)/) || [];
+      if (pid && name && price) items.push({
+        title: name.slice(0, 80),
+        price: parseInt(price),
+        link: `https://www.coupang.com/vp/products/${pid}`,
+        mall: '쿠팡',
+        source: 'coupang'
+      });
+    });
+    return items.filter(i => i.price > 1000);
+  } catch (e) {
+    console.error('⚠️ 쿠팡 검색 오류:', e.message);
+    return [];
+  }
+}
+
+// 당근마켓 중고가 검색
+async function searchDangn(query) {
+  try {
+    const res = await fetch(`https://www.daangn.com/search/?keyword=${encodeURIComponent(query)}&type=general`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const items = [];
+    const matches = html.match(/href="\/articles\/([^"]+)"[^>]*>([^<]*)[^<]*<[^>]*>([0-9,]+)원/g) || [];
+    matches.slice(0, 5).forEach(m => {
+      const [,id,title,price] = m.match(/\/articles\/([^"]+)"[^>]*>([^<]*)[^<]*<[^>]*>([0-9,]+)원/) || [];
+      if (id && title && price) items.push({
+        title: title.slice(0, 80),
+        price: parseInt(price.replace(/,/g, '')),
+        link: `https://www.daangn.com/articles/${id}`,
+        mall: '당근마켓',
+        source: 'dangn'
+      });
+    });
+    return items.filter(i => i.price > 1000);
+  } catch (e) {
+    console.error('⚠️ 당근마켓 검색 오류:', e.message);
+    return [];
+  }
+}
+
+// 시세 분석 및 구매 타이밍 판정
+function analyzePricing(items) {
+  if (!items || items.length === 0) return null;
+  const prices = items.map(i => i.price).filter(p => p > 0);
+  const lowest = Math.min(...prices), avg = Math.round(prices.reduce((a,b) => a+b) / prices.length);
+  const discount = Math.round((1 - lowest / Math.max(...prices)) * 100);
+  const timing = lowest < avg * 0.85 ? '🔥 지금 구매 (최저가 기록)' : lowest < avg * 0.92 ? '✅ 지금 사세요 (평균 대비 8-15% 절감)' : '⏳ 가격 인하 기다리기';
+  const malls = [...new Set(items.map(i => i.mall))].slice(0, 3);
+  const shippingNote = lowest > 100000 ? '배송비 포함' : '배송비 추가 예상';
+  return { lowest, avg, discount, timing, malls, shippingNote, itemCount: items.length };
+}
+
+// 제품 종류 감지
+function detectProductType(title) {
+  if (!title) return 'mac';
+  const t = title.toLowerCase();
+  if (/iphone|아이폰/.test(t)) return 'iphone';
+  if (/ipad|아이패드/.test(t)) return 'ipad';
+  if (/airpods|에어팟/.test(t)) return 'airpods';
+  if (/apple watch|애플워치|애플 워치/.test(t)) return 'watch';
+  return 'mac';
+}
+
+// 제품 제목에서 네이버 검색 쿼리 추출
+function extractProductQuery(title) {
+  if (!title || title === '스크랩 실패' || title === 'URL 오류' || title === '페이지 오류') return '애플';
   const clean = title.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  // M칩 + 인치 + 메모리 패턴 추출
+  const type = detectProductType(clean);
+
+  if (type === 'iphone') {
+    const model = clean.match(/iphone\s*\d+(\s*(pro\s*max|pro|plus|mini))?/i)?.[0] || 'iPhone';
+    const storage = clean.match(/(\d+\s*GB|\d+\s*TB)/i)?.[0] || '';
+    const color = clean.match(/(블랙|화이트|블루|핑크|티타늄|내추럴|울트라마린|사막|실버|골드)/i)?.[0] || '';
+    return [model, storage, color].filter(Boolean).join(' ').trim();
+  }
+  if (type === 'ipad') {
+    const model = clean.match(/ipad\s*(pro|air|mini)?\s*(\d+[\s]?인치|\d+")?/i)?.[0] || 'iPad';
+    const chip = clean.match(/M\d[\s]?(Pro|Max)?/i)?.[0] || '';
+    const storage = clean.match(/(\d+\s*GB|\d+\s*TB)/i)?.[0] || '';
+    return [model, chip, storage].filter(Boolean).join(' ').trim();
+  }
+  if (type === 'airpods') {
+    const model = clean.match(/airpods\s*(pro|max)?\s*(\d세대)?/i)?.[0] || 'AirPods';
+    return model;
+  }
+  if (type === 'watch') {
+    const seriesMatch = clean.match(/series\s*(\d+)/i)?.[1];
+    const sizeMatch = clean.match(/(\d{2}mm)/i)?.[0];
+    const connectivity = clean.match(/(LTE|GPS|셀룰러|지피에스)/i)?.[0];
+    const material = clean.match(/(알루미늄|스테인리스|티타늄)/i)?.[0];
+    let query = '애플워치';
+    if (seriesMatch) query += ` 시리즈 ${seriesMatch}`;
+    if (sizeMatch) query += ` ${sizeMatch}`;
+    if (connectivity) query += ` ${connectivity}`;
+    if (material) query += ` ${material}`;
+    return query.trim();
+  }
+  // Mac
   const chip = clean.match(/M\d[\s]?(Pro|Max|Ultra)?/i)?.[0] || '';
   const inch = clean.match(/(\d{2}[\s]?인치|\d{2}")/i)?.[0] || '';
   const mem = clean.match(/(\d+GB)/i)?.[0] || '';
@@ -133,7 +274,8 @@ async function scrapeProductInfo(url) {
       url
     };
   } catch (e) {
-    return { title: '스크랩 실패', price: null, description: '', url };
+    console.error(`❌ 스크랩 실패 [${url}]:`, e.message);
+    return { title: '스크랩 실패', price: null, description: `오류: ${e.message.slice(0, 50)}`, url, error: true };
   }
 }
 
@@ -230,6 +372,79 @@ function upsertUser(db, { email, ip, source, url, analysisId, purchaseId }) {
   return user;
 }
 
+// 재고 처분 플래시세일 감지 — 동일 업체가 단기간 저가 반복 = 재고 소진 시그널
+function detectFlashSales(deals, productType) {
+  if (!deals || deals.length < 3) return null;
+
+  const now = Date.now();
+  const sevenDays = 7 * 24 * 60 * 60 * 1000;
+  const recent = deals.filter(d => {
+    if (!d.finalPrice || !d.store) return false;
+    const dealTs = d.ts || (d.date ? new Date(d.date).getTime() : 0);
+    if ((now - dealTs) >= sevenDays) return false;
+    if (productType) {
+      const dealType = d.productType || detectProductType(d.model || '');
+      if (dealType !== productType) return false;
+    }
+    return true;
+  });
+  if (recent.length < 2) return null;
+
+  // 업체별 최근 7일 등장 횟수 + 평균가 vs 전체 평균 비교
+  const allAvg = (() => {
+    const filtered = deals.filter(d => {
+      if (!d.finalPrice) return false;
+      if (productType) {
+        const dealType = d.productType || detectProductType(d.model || '');
+        return dealType === productType;
+      }
+      return true;
+    });
+    if (filtered.length === 0) return 0;
+    return filtered.reduce((s, d) => s + d.finalPrice, 0) / filtered.length;
+  })();
+  if (!allAvg) return null;
+
+  const byStore = {};
+  recent.forEach(d => {
+    if (!byStore[d.store]) byStore[d.store] = { prices: [], urls: [], conditions: [] };
+    byStore[d.store].prices.push(d.finalPrice);
+    if (d.storeUrl) byStore[d.store].urls.push(d.storeUrl);
+    if (d.condition) byStore[d.store].conditions.push(d.condition);
+  });
+
+  const signals = [];
+  for (const [store, data] of Object.entries(byStore)) {
+    const avgPrice = data.prices.reduce((s, p) => s + p, 0) / data.prices.length;
+    const dropRatio = (allAvg - avgPrice) / allAvg;
+    const appearCount = data.prices.length;
+
+    if (appearCount >= 2 && dropRatio > 0.05) {
+      const latestUrl = data.urls.slice(-1)[0] || null;
+      signals.push({
+        store,
+        dropRatio: Math.round(dropRatio * 100),
+        avgPrice: Math.round(avgPrice),
+        appearCount,
+        latestUrl,
+        latestCondition: data.conditions.slice(-1)[0] || null,
+      });
+    }
+  }
+
+  if (signals.length === 0) return null;
+
+  const lines = signals
+    .sort((a, b) => b.dropRatio - a.dropRatio)
+    .slice(0, 3)
+    .map(s => {
+      const urlNote = s.latestUrl ? ` (최근 링크: ${s.latestUrl})` : '';
+      return `⚡ ${s.store} — 7일간 ${s.appearCount}회 등장, 전체 평균보다 ${s.dropRatio}% 저렴 (${Math.round(s.avgPrice/10000)}만원대)${urlNote}`;
+    });
+
+  return `[재고 처분 플래시세일 감지 — 업체 자금흐름 이상 신호]\n` + lines.join('\n');
+}
+
 // DB 패턴 분석 — 누적 딜 데이터에서 인텔리전스 추출
 function analyzeDealsDB(deals) {
   if (!deals || deals.length < 3) return null;
@@ -308,10 +523,12 @@ app.post('/api/analyze', async (req, res) => {
   const purchase = token ? db.purchases.find(p => p.token === token && (p.status === 'paid' || p.status === 'beta')) : null;
   const tier = purchase ? purchase.tier : 'free';
 
+  const isLocalhost = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+  const isTestMode = req.headers['x-test-token'] === ADMIN_TOKEN || isLocalhost;
   const freeUsed = getFreeUsage(ip);
   const todayBonus = ((db.bonuses || []).filter(b => b.ip === ip && b.date === today()).reduce((s, b) => s + b.uses, 0));
   const allowedTotal = 3 + todayBonus;
-  if (tier === 'free' && freeUsed >= allowedTotal) {
+  if (tier === 'free' && freeUsed >= allowedTotal && !isTestMode) {
     return res.status(403).json({
       error: '무료 분석은 하루 1회입니다',
       code: 'FREE_LIMIT',
@@ -332,11 +549,20 @@ app.post('/api/analyze', async (req, res) => {
       productInfo = await scrapeProductInfo(url);
     }
 
-    // 타 제품 명확히 감지 시만 차단
+    // 비애플 제품 차단 (삼성/LG/윈도우 등)
     const titleKnown = productInfo.title && productInfo.title !== '스크랩 실패' && productInfo.title !== '제목 없음';
-    const isNonMac = titleKnown && /iphone|아이폰|ipad|아이패드|galaxy|갤럭시|windows|갤탭|LG그램|삼성노트북|레노버|델\s|HP\s/i.test(productInfo.title);
-    if (isNonMac) {
-      return res.status(400).json({ error: '맥북 상품만 분석 가능합니다.', code: 'NOT_MACBOOK' });
+    const isNonApple = titleKnown && /galaxy|갤럭시|windows|갤탭|LG그램|삼성노트북|레노버|ThinkPad|XPS|Surface\s|델\s|HP\s/i.test(productInfo.title);
+    if (isNonApple) {
+      return res.status(400).json({ error: '애플 제품만 분석 가능합니다. (MacBook, iPhone, iPad, AirPods, Apple Watch)', code: 'NOT_APPLE' });
+    }
+
+    // 검색결과/카탈로그 URL 서버측 차단
+    const isSearchOrCatalog = isUrl && /search\.shopping\.naver\.com\/(search|catalog\/)|search\.naver\.com\/search|coupang\.com\/np\/search|danawa\.com\/search\?/i.test(url);
+    if (isSearchOrCatalog) {
+      return res.status(400).json({
+        error: '검색결과 페이지가 아닌 상품 상세 페이지 URL을 입력해주세요.',
+        code: 'SCRAPE_FAILED'
+      });
     }
 
     // 스크랩 실패 + 모델 특정 불가 → 에러 반환 (AI 환각 방지)
@@ -353,9 +579,16 @@ app.post('/api/analyze', async (req, res) => {
 
     const deals = db.deals || [];
 
-    // 1. 최근 raw 딜 (최근 30건)
-    const recentDeals = deals.slice(-30)
-      .map(d => `[${d.date}] ${d.store} | ${d.dealType} | ${d.cardName || '-'} ${d.discountRate || ''} | 조건: ${d.condition || '-'} | 최종가: ${d.finalPrice ? Math.round(d.finalPrice/10000)+'만원' : '-'}`)
+    // 1. 최근 raw 딜 — 같은 제품 타입 우선, 최근 30건
+    const recentDeals = [...deals]
+      .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+      .filter((_, i) => i < 60)
+      .filter(d => !d.productType || d.productType === detectProductType(productInfo.title))
+      .slice(0, 30)
+      .map(d => {
+        const urlNote = d.storeUrl ? ` 🔗${d.storeUrl}` : '';
+        return `[${d.date}] ${d.store} | ${d.dealType} | ${d.cardName || '-'} ${d.discountRate || ''} | 조건: ${d.condition || '-'} | 최종가: ${d.finalPrice ? Math.round(d.finalPrice/10000)+'만원' : '-'}${urlNote}`;
+      })
       .join('\n');
 
     // 2. DB 패턴 분석 — 누적 학습 지식 추출
@@ -403,7 +636,8 @@ app.post('/api/analyze', async (req, res) => {
     })();
 
     // 네이버 쇼핑 API 실시간 가격 조회
-    const modelQuery = extractMacModelQuery(productInfo.title);
+    const productType = detectProductType(productInfo.title);
+    const modelQuery = extractProductQuery(productInfo.title);
     const naverItems = await searchNaverShopping(modelQuery);
 
     // 고객 가격 vs 네이버 최저가 비교
@@ -429,9 +663,30 @@ ${lines.join('\n')}
     })();
 
     const today_str = new Date().toISOString().slice(0,10);
-    const prompt = `맥북 최저가 구매 분석입니다. 고객이 준 링크의 제품을 네이버 쇼핑 실시간 데이터와 비교해 최적 구매 경로를 JSON으로 반환하세요.
+    const productTypeLabel = { mac: '맥북', iphone: '아이폰', ipad: '아이패드', airpods: '에어팟', watch: '애플워치' }[productType] || '애플 제품';
+    const productTypeHints = {
+      iphone: `※ iPhone 분석 필수 포함사항:
+- 자급제 최저가: 쿠팡/11번가/G마켓 가격 기준
+- SKT/KT/LGU+ 공시지원금 vs 선택약정 25% 중 유리한 쪽 명시
+- 자급제 vs 통신사 약정 24개월 총비용 비교 (요금제 포함)
+- 현대카드·삼성카드·KB카드 즉시할인 조건 반드시 paths에 포함
+- paths 1위: 자급제 최저가 (카드할인 적용), 2-3위: 통신사 공시지원금 추천 조합`,
+      ipad: `※ iPad 분석 주의사항:
+- Wi-Fi vs Cellular 모델 구분
+- 애플 교육할인 적용 여부
+- 쿠팡/11번가/애플공식 가격 비교`,
+      mac: `※ Mac 분석 주의사항:
+- 카드사 즉시할인 (삼성/현대/롯데카드)
+- 교육할인 vs 일반가 비교
+- 다나와 현금최저가 확인`,
+      airpods: `※ AirPods 분석: 정품 vs 리퍼 비교, 쿠팡 로켓배송 최저가 확인`,
+      watch: `※ Apple Watch 분석: GPS vs Cellular, 소재(알루미늄/스테인리스) 구분`,
+    }[productType] || '';
+
+    const prompt = `애플 제품 최저가 구매 분석입니다. 고객이 준 제품을 네이버 쇼핑 실시간 데이터와 비교해 최적 구매 경로를 JSON으로 반환하세요.
 
 오늘 날짜: ${today_str}
+제품 유형: ${productTypeLabel}
 분석 URL: ${url}
 
 ━━━ 고객 상품 정보 ━━━
@@ -441,22 +696,25 @@ ${lines.join('\n')}
 
 ${naverPriceBlock}
 
+${productTypeHints}
 ${brainIntel || ''}
 ${learnedIntel || ''}
-[최근 딜 (30건)] ${recentDeals || '없음'}
+${detectFlashSales(db.deals, productType) || ''}
+[최근 딜 (30건)]
+${recentDeals || '없음'}
 
 ━━━ 분석 로직 ━━━
 1. 고객 가격 vs 네이버 최저가 비교:
    - 이미 최저가 → verdict.alreadyLowest=true, "잘 찾으셨어요! 현재 최저가입니다" 멘트
    - 더 싼 곳 있음 → 절약 경로 제시, saveAmount = 고객가 - 네이버최저가
 2. paths: 네이버 API 실제 데이터 우선. url 필드에 실제 링크 반드시 포함.
-3. 데이터 없는 경로는 학습 데이터 추정 (condition에 "추정" 명시).
+3. 데이터 없는 경로는 추정 (condition에 "추정" 명시).
 4. paths 최소 3개. 응답은 JSON만.
 
 ━━━ JSON 형식으로만 응답 (json 코드블록 포함 가능, 다른 텍스트 금지) ━━━
 
 {
-  "model": "정확한 모델명 (칩·메모리·스토리지 포함, 예: MacBook Pro 14인치 M4 Pro 24GB 1TB)",
+  "model": "정확한 모델명 (예: iPhone 16 Pro 256GB 블랙 / MacBook Pro 14인치 M4 Pro 24GB 1TB)",
   "currentPrice": 숫자(분석 URL 현재 판매가),
   "saveAmount": 숫자(최적 경로 적용 시 신품 정가 대비 총 절약액),
   "tian": {
@@ -497,7 +755,7 @@ ${learnedIntel || ''}
       "price": 숫자(신품 정가),
       "finalPrice": 숫자(모든 할인 적용 후 실제 결제가),
       "saveAmount": 숫자(신품 정가 대비 절약액),
-      "url": null
+      "url": "해당 판매처 직접 상품 링크 URL (네이버 API 데이터에서 제공된 링크 우선, 없으면 null)"
     }
   ],
   "usedMarket": {
@@ -559,6 +817,37 @@ ${learnedIntel || ''}
       };
     }
 
+    // paths 폴백 — AI가 빈 배열 반환 시 네이버 데이터로 채움
+    if ((!analysis.paths || analysis.paths.length === 0) && naverItems && naverItems.length > 0) {
+      analysis.paths = naverItems.slice(0, 5).map((item, i) => ({
+        rank: i + 1,
+        store: item.mallName,
+        isUsed: false,
+        usedGrade: null,
+        dealType: '최저가',
+        cardName: null,
+        discountRate: null,
+        couponInfo: null,
+        condition: '네이버 쇼핑 최저가 기준',
+        price: parseInt(item.lprice),
+        finalPrice: parseInt(item.lprice),
+        saveAmount: customerPrice ? Math.max(0, customerPrice - parseInt(item.lprice)) : 0,
+        url: item.link,
+      }));
+    }
+
+    // paths finalPrice 보완 — 0이거나 없으면 네이버 데이터로 채움
+    if (analysis.paths && naverItems) {
+      analysis.paths = analysis.paths.map((p, i) => {
+        const fallbackPrice = naverItems[i] ? parseInt(naverItems[i].lprice) : 0;
+        return {
+          ...p,
+          finalPrice: p.finalPrice || p.price || fallbackPrice || null,
+          url: p.url || naverItems[i]?.link || null,
+        };
+      });
+    }
+
     // 딜 정보 DB 누적 저장 (paths 각각)
     if (!db.deals) db.deals = [];
     if (analysis.paths) {
@@ -566,7 +855,9 @@ ${learnedIntel || ''}
         if (p.finalPrice) {
           db.deals.push({
             date: today(),
+            ts: Date.now(),
             model: analysis.model,
+            productType: detectProductType(analysis.model),
             store: p.store,
             dealType: p.dealType || '기본가',
             cardName: p.cardName || null,
@@ -576,6 +867,7 @@ ${learnedIntel || ''}
             price: p.price,
             finalPrice: p.finalPrice,
             saveAmount: p.saveAmount,
+            storeUrl: p.url || null,
             sourceUrl: url
           });
         }
@@ -926,6 +1218,67 @@ app.post('/api/track', (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// POST /api/extract-screenshot — 스크린샷 이미지에서 상품명·가격 추출 (Claude Vision)
+app.post('/api/extract-screenshot', async (req, res) => {
+  const { image_base64, media_type = 'image/jpeg' } = req.body;
+  if (!image_base64) return res.status(400).json({ error: '이미지 데이터가 없습니다' });
+
+  const prompt = `이 스크린샷은 쇼핑몰 상품 페이지입니다. 다음 정보를 JSON으로 추출해주세요:
+- title: 정확한 상품명 (Apple 제품이면 영문 모델명 포함, 예: "Apple MacBook Air 13인치 M3 8GB 256GB 미드나이트")
+- price: 현재 판매가 숫자만 (원 단위, 예: 1390000)
+- store: 판매처 (쿠팡/애플/다나와/네이버 등)
+
+JSON만 출력:
+{"title":"...","price":숫자또는null,"store":"..."}`;
+
+  try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY 없음 — Render 환경변수 확인' });
+
+    const body = JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type, data: image_base64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    });
+
+    const apiRes = await new Promise((resolve, reject) => {
+      const req2 = https.request({
+        hostname: 'api.anthropic.com',
+        path: '/v1/messages',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'Content-Length': Buffer.byteLength(body)
+        }
+      }, r => {
+        let d = '';
+        r.on('data', c => d += c);
+        r.on('end', () => resolve({ status: r.statusCode, body: d }));
+      });
+      req2.on('error', reject);
+      req2.write(body);
+      req2.end();
+    });
+
+    const parsed = JSON.parse(apiRes.body);
+    const text = parsed.content?.[0]?.text || '{}';
+    const clean = text.replace(/```json\n?|```\n?/g, '').trim();
+    const extracted = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}') + 1));
+    res.json({ success: true, ...extracted });
+  } catch (e) {
+    console.error('스크린샷 추출 오류:', e.message);
+    res.status(500).json({ error: '이미지 분석 실패: ' + e.message });
+  }
 });
 
 app.listen(PORT, () => {
