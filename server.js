@@ -295,9 +295,10 @@ app.post('/api/analyze', async (req, res) => {
       productInfo = await scrapeProductInfo(url);
     }
 
-    // 맥북 상품이 아닌 경우 차단 (스크랩 실패 시는 통과)
+    // 타 제품 명확히 감지 시만 차단 (맥북 키워드 없어도 통과, 타 제품 키워드 있을 때만 차단)
     const titleKnown = productInfo.title && productInfo.title !== '스크랩 실패' && productInfo.title !== '제목 없음';
-    if (titleKnown && !/macbook|맥북|mac book/i.test(productInfo.title)) {
+    const isNonMac = titleKnown && /iphone|아이폰|ipad|아이패드|galaxy|갤럭시|windows|갤탭|LG그램|삼성노트북|레노버|델\s|HP\s/i.test(productInfo.title);
+    if (isNonMac) {
       return res.status(400).json({
         error: '맥북 상품만 분석 가능합니다.\n맥북 상품 페이지 URL을 입력해주세요. (쿠팡·네이버·다나와·애플)',
         code: 'NOT_MACBOOK'
