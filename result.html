@@ -281,6 +281,7 @@ main { padding-top: 44px; }
 .card-name { font-size: 13px; font-weight: 600; }
 .card-desc { font-size: 12px; color: var(--apple-text2); margin-top: 1px; }
 .card-discount { font-size: 15px; font-weight: 700; color: var(--red); }
+.card-disc-locked { filter: blur(5px); user-select: none; }
 
 /* VAT CALCULATOR */
 .vat-calc {
@@ -607,43 +608,41 @@ main { padding-top: 44px; }
       </div>
     </div>
 
-    <!-- 카드 조합 — LOCKED -->
+    <!-- 카드 조합 — 카드명 공개, 할인율만 블러 -->
     <div class="section-title">카드 조합 할인</div>
-    <div class="paths-card">
+    <div class="paths-card" id="cardSection">
       <div class="paths-header">
         <h2>최적 카드 조합</h2>
         <span class="paths-tier-badge tier-free">ONE-TIME 이상</span>
       </div>
-      <div class="blur-section">
-        <div class="blur-content">
-          <div class="cards-list">
-            <div class="card-item">
-              <div class="card-logo" style="background:#005BAC;">하나</div>
-              <div class="card-info">
-                <div class="card-name">하나카드 원큐</div>
-                <div class="card-desc">30만원 이상 결제 시 · 하이마트 전용</div>
-              </div>
-              <div class="card-discount">-7%</div>
+      <div style="position:relative;">
+        <div class="cards-list" id="cardsList">
+          <div class="card-item">
+            <div class="card-logo" style="background:#005BAC;">하나</div>
+            <div class="card-info">
+              <div class="card-name">하나카드 원큐</div>
+              <div class="card-desc">30만원 이상 결제 시 · 하이마트 전용</div>
             </div>
-            <div class="card-item">
-              <div class="card-logo" style="background:#0046BE;">신한</div>
-              <div class="card-info">
-                <div class="card-name">신한 SOL트래블</div>
-                <div class="card-desc">해외직구 결제 시 전월실적 무관</div>
-              </div>
-              <div class="card-discount">-5%</div>
+            <div class="card-discount card-disc-locked">-7%</div>
+          </div>
+          <div class="card-item">
+            <div class="card-logo" style="background:#0046BE;">신한</div>
+            <div class="card-info">
+              <div class="card-name">신한 SOL트래블</div>
+              <div class="card-desc">해외직구 결제 시 전월실적 무관</div>
             </div>
-            <div class="card-item">
-              <div class="card-logo" style="background:#E11B22;">KB</div>
-              <div class="card-info">
-                <div class="card-name">KB Pay 국민카드</div>
-                <div class="card-desc">쿠팡 Pay 연동 시 추가 캐시백</div>
-              </div>
-              <div class="card-discount">-3%</div>
+            <div class="card-discount card-disc-locked">-5%</div>
+          </div>
+          <div class="card-item">
+            <div class="card-logo" style="background:#E11B22;">KB</div>
+            <div class="card-info">
+              <div class="card-name">KB Pay 국민카드</div>
+              <div class="card-desc">쿠팡 Pay 연동 시 추가 캐시백</div>
             </div>
+            <div class="card-discount card-disc-locked">-3%</div>
           </div>
         </div>
-        <div class="blur-overlay" style="border-radius:0 0 18px 18px;">
+        <div class="blur-overlay" id="cardOverlay" style="border-radius:0 0 18px 18px;top:0;left:0;right:0;bottom:0;">
           <div class="lock-icon">💳</div>
           <h3>카드 조합 상세 보기</h3>
           <p>적용 조건·한도·스택 가능 여부까지 전부 공개</p>
@@ -773,6 +772,8 @@ const $ = id => document.getElementById(id);
 
 const params = new URLSearchParams(location.search);
 const urlParam = params.get('url') || '';
+const scrapedTitle = params.get('scraped_title') || '';
+const scrapedPrice = params.get('scraped_price') || '';
 const tier = localStorage.getItem('macdosa_tier') || 'free';
 const purchaseToken = localStorage.getItem('macdosa_token');
 
@@ -822,7 +823,12 @@ async function fetchAndRender() {
     const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: urlParam, token: purchaseToken || undefined })
+      body: JSON.stringify({
+        url: urlParam,
+        token: purchaseToken || undefined,
+        scraped_title: scrapedTitle || undefined,
+        scraped_price: scrapedPrice || undefined
+      })
     });
 
     clearInterval(stepTimer);
@@ -833,7 +839,11 @@ async function fetchAndRender() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      showError(err.error || '분석 중 오류가 발생했습니다.');
+      if (err.code === 'NOT_MACBOOK') {
+        showError('맥북 상품만 분석 가능합니다 🧙‍♂️\n아이폰·아이패드·윈도우 노트북은 지원하지 않습니다.\n맥북 쿠팡·네이버·다나와 상품 페이지 URL을 입력해주세요.');
+      } else {
+        showError(err.error || '분석 중 오류가 발생했습니다.');
+      }
       return;
     }
 
@@ -921,7 +931,9 @@ function initResult(data, serverTier) {
     $('verdictTitle').textContent = data.verdict.title || '';
     $('verdictDesc').textContent = data.verdict.desc || '';
     const badge = $('verdictBadge');
-    if (data.verdict.buy) {
+    // saveAmount > 30만원이면 무조건 "지금 사세요" (절약액이 크면 대기 추천 불가)
+    const forceBuy = data.saveAmount > 300000;
+    if (data.verdict.buy || forceBuy) {
       badge.textContent = '지금 사세요';
       badge.className = 'verdict-badge';
     } else {
@@ -1061,7 +1073,10 @@ function buildDealTags(p) {
   if (p.dealType && p.dealType !== '기본가') t += `<span class="deal-tag deal-tag-hot">${p.dealType}</span>`;
   if (p.cardName) t += `<span class="deal-tag deal-tag-card">💳 ${p.cardName}${p.discountRate ? ' ' + p.discountRate : ''}</span>`;
   if (p.couponInfo) t += `<span class="deal-tag deal-tag-coupon">🎟 ${p.couponInfo}</span>`;
-  if (p.condition) t += `<span class="deal-tag-condition">${p.condition}</span>`;
+  if (p.condition) {
+    const cond = p.condition.length > 40 ? p.condition.slice(0, 40) + '…' : p.condition;
+    t += `<span class="deal-tag-condition">${cond}</span>`;
+  }
   return t || p.detail || '';
 }
 
@@ -1099,6 +1114,10 @@ function unlockPaths() {
     if (content) content.style.filter = 'none';
     if (overlay) overlay.style.display = 'none';
   });
+  // 카드 할인율 블러 해제
+  document.querySelectorAll('.card-disc-locked').forEach(el => { el.style.filter = 'none'; });
+  const cardOverlay = document.getElementById('cardOverlay');
+  if (cardOverlay) cardOverlay.style.display = 'none';
   // 1위 구매링크 블러 해제 + 실제 링크 연결
   const buyBlur = $('buyLinkBlur');
   if (buyBlur && urlParam) {

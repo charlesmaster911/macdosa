@@ -265,7 +265,7 @@ for (const [route, file] of Object.entries(PAGES)) {
 
 // POST /api/analyze — FREE: 하루 1회, ONE-TIME/PRO: 무제한
 app.post('/api/analyze', async (req, res) => {
-  const { url, email, token } = req.body;
+  const { url, email, token, scraped_title, scraped_price } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   if (!url) return res.status(400).json({ error: 'URL이 필요합니다' });
@@ -287,8 +287,23 @@ app.post('/api/analyze', async (req, res) => {
   }
 
   try {
-    // URL 스크랩 — 상품 제목/가격 추출해서 Claude 컨텍스트 주입
-    const productInfo = await scrapeProductInfo(url);
+    // 북마클릿에서 직접 넘겨준 데이터 우선 사용, 없으면 서버 스크랩 시도
+    let productInfo;
+    if (scraped_title) {
+      productInfo = { title: scraped_title, price: scraped_price ? parseInt(scraped_price) : null, description: '', url };
+    } else {
+      productInfo = await scrapeProductInfo(url);
+    }
+
+    // 맥북 상품이 아닌 경우 차단 (스크랩 실패 시는 통과)
+    const titleKnown = productInfo.title && productInfo.title !== '스크랩 실패' && productInfo.title !== '제목 없음';
+    if (titleKnown && !/macbook|맥북|mac book/i.test(productInfo.title)) {
+      return res.status(400).json({
+        error: '맥북 상품만 분석 가능합니다.\n맥북 상품 페이지 URL을 입력해주세요. (쿠팡·네이버·다나와·애플)',
+        code: 'NOT_MACBOOK'
+      });
+    }
+
     const coupangId = url.match(/coupang\.com\/vp\/products\/(\d+)/)?.[1];
 
     const deals = db.deals || [];
@@ -800,6 +815,26 @@ app.post('/api/subscribe', (req, res) => {
   writeDB(db);
   const isNew = !db.users.find(u => u.email === email && u.createdAt !== user.createdAt);
   res.json({ success: true, isNew });
+});
+
+// GET /api/bookmarklet — 북마클릿 JS 파일 제공
+app.get('/api/bookmarklet', (req, res) => {
+  const host = `${req.protocol}://${req.get('host')}`;
+  const js = `(function(){
+  var u=location.href;
+  if(!u.includes('coupang.com')){alert('쿠팡 상품 페이지에서 클릭해주세요!');return;}
+  var title=document.querySelector('.prod-buy-header__title')?.innerText
+    ||document.querySelector('[class*="prod-title"]')?.innerText
+    ||document.title||'';
+  var price=document.querySelector('.prod-buy-header__price-num')?.innerText
+    ||document.querySelector('[class*="price-num"]')?.innerText
+    ||document.querySelector('[class*="final-price"]')?.innerText||'';
+  price=price.replace(/[^0-9]/g,'');
+  if(!title){alert('상품 정보를 읽을 수 없습니다. 상품 페이지가 맞는지 확인해주세요.');return;}
+  var params=new URLSearchParams({url:u,scraped_title:title.trim(),scraped_price:price});
+  location.href='${host}/result?'+params;
+})();`;
+  res.type('application/javascript').send(js);
 });
 
 // POST /api/track — 클라이언트 행동 이벤트 서버 저장
