@@ -840,7 +840,9 @@ async function fetchAndRender() {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       if (err.code === 'NOT_MACBOOK') {
-        showError('맥북 상품만 분석 가능합니다 🧙‍♂️\n아이폰·아이패드·윈도우 노트북은 지원하지 않습니다.\n맥북 쿠팡·네이버·다나와 상품 페이지 URL을 입력해주세요.');
+        showError('맥북 상품만 분석 가능합니다 🧙‍♂️\n아이폰·아이패드·윈도우 노트북은 지원하지 않습니다.\n맥북 쿠팡·애플·다나와 상품 페이지 URL을 입력해주세요.');
+      } else if (err.code === 'SCRAPE_FAILED') {
+        showError('상품 정보를 읽을 수 없는 URL입니다 🔍\n쿠팡·애플 공식·다나와 상품 페이지 URL을 사용해주세요.\n(네이버 카탈로그·검색결과 페이지는 지원하지 않습니다)');
       } else {
         showError(err.error || '분석 중 오류가 발생했습니다.');
       }

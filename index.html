@@ -1107,7 +1107,7 @@ window.addEventListener('scroll', () => {
 
 /* ── 검색결과 URL 감지 ── */
 function isSearchResultUrl(url) {
-  return /search\.shopping\.naver\.com\/search\/|search\.naver\.com\/search|coupang\.com\/np\/search|search\.danawa\.com|danawa\.com\/search\?|query=|[?&]q=/.test(url);
+  return /search\.shopping\.naver\.com\/(search|catalog\/)|search\.naver\.com\/search|naver\.com\/search|coupang\.com\/np\/search|search\.danawa\.com|danawa\.com\/search\?/.test(url);
 }
 
 function showUrlWarning(msg) {

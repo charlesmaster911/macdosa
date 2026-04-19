@@ -332,13 +332,20 @@ app.post('/api/analyze', async (req, res) => {
       productInfo = await scrapeProductInfo(url);
     }
 
-    // 타 제품 명확히 감지 시만 차단 (맥북 키워드 없어도 통과, 타 제품 키워드 있을 때만 차단)
+    // 타 제품 명확히 감지 시만 차단
     const titleKnown = productInfo.title && productInfo.title !== '스크랩 실패' && productInfo.title !== '제목 없음';
     const isNonMac = titleKnown && /iphone|아이폰|ipad|아이패드|galaxy|갤럭시|windows|갤탭|LG그램|삼성노트북|레노버|델\s|HP\s/i.test(productInfo.title);
     if (isNonMac) {
+      return res.status(400).json({ error: '맥북 상품만 분석 가능합니다.', code: 'NOT_MACBOOK' });
+    }
+
+    // 스크랩 실패 + 모델 특정 불가 → 에러 반환 (AI 환각 방지)
+    const scrapeFailed = !titleKnown || productInfo.title === '스크랩 실패';
+    const isCoupang = isUrl && /coupang\.com\/vp\/products\//.test(url);
+    if (scrapeFailed && !isCoupang && isUrl) {
       return res.status(400).json({
-        error: '맥북 상품만 분석 가능합니다.\n맥북 상품 페이지 URL을 입력해주세요. (쿠팡·네이버·다나와·애플)',
-        code: 'NOT_MACBOOK'
+        error: '이 URL은 상품 정보를 읽을 수 없습니다.\n쿠팡·애플 공식·다나와 상품 페이지 URL을 사용해주세요.',
+        code: 'SCRAPE_FAILED'
       });
     }
 
