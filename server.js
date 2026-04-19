@@ -181,6 +181,22 @@ function issueToken(email) {
   return Buffer.from(`${email}:${Date.now()}`).toString('base64');
 }
 
+// 유저 프로필 upsert — 이메일 기준으로 생성/업데이트
+function upsertUser(db, { email, ip, source, url, analysisId, purchaseId }) {
+  if (!db.users) db.users = [];
+  let user = db.users.find(u => u.email === email);
+  if (!user) {
+    user = { id: Date.now().toString(), email, ip, source, createdAt: new Date().toISOString(), analyses: [], purchases: [], urls: [] };
+    db.users.push(user);
+  }
+  if (ip && !user.ip) user.ip = ip;
+  if (analysisId && !user.analyses.includes(analysisId)) user.analyses.push(analysisId);
+  if (purchaseId && !user.purchases.includes(purchaseId)) user.purchases.push(purchaseId);
+  if (url && !user.urls.includes(url)) user.urls.push(url);
+  user.lastSeenAt = new Date().toISOString();
+  return user;
+}
+
 // DB 패턴 분석 — 누적 딜 데이터에서 인텔리전스 추출
 function analyzeDealsDB(deals) {
   if (!deals || deals.length < 3) return null;
@@ -506,6 +522,8 @@ ${recentDeals || '아직 없음'}
       createdAt: new Date().toISOString()
     };
     db.analyses.push(record);
+    // 이메일 있으면 유저 프로필에 분석 기록 연결
+    if (email) upsertUser(db, { email, ip, source: 'analyze', url, analysisId: record.id });
     writeDB(db);
 
     // FREE: 1위만 부분 공개, 2위 이하와 카드 조합은 잠금
@@ -545,11 +563,14 @@ app.post('/api/payment/initiate', async (req, res) => {
   if (IS_BETA) {
     const db = readDB();
     const token = issueToken(email);
-    db.purchases.push({
+    const purchaseRecord = {
       id: orderId, email, payType, amount,
       token, tier: payType === 'ONETIME' ? 'one-time' : 'pro',
       status: 'beta', createdAt: new Date().toISOString()
-    });
+    };
+    db.purchases.push(purchaseRecord);
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    upsertUser(db, { email, ip, source: 'purchase', url: macUrl, purchaseId: orderId });
     writeDB(db);
     return res.json({ betaAccess: true, token });
   }
@@ -708,6 +729,24 @@ app.get('/api/reviews', (req, res) => {
   const db = readDB();
   const reviews = (db.reviews || []).slice(-20).reverse();
   res.json({ reviews });
+});
+
+// POST /api/subscribe — 이메일 수집 (가격 알림 신청, 뉴스레터, 무료분석 후 등록)
+app.post('/api/subscribe', (req, res) => {
+  const { email, source, url } = req.body;
+  if (!email || !email.includes('@')) return res.status(400).json({ error: '이메일 형식 오류' });
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const db = readDB();
+  const user = upsertUser(db, { email, ip, source: source || 'subscribe', url });
+  // alerts에도 저장 (가격 알림 요청으로 활용)
+  if (!db.alerts) db.alerts = [];
+  const alreadyAlerted = db.alerts.find(a => a.email === email && a.url === url);
+  if (!alreadyAlerted && url) {
+    db.alerts.push({ email, url, ip, source: source || 'subscribe', createdAt: new Date().toISOString() });
+  }
+  writeDB(db);
+  const isNew = !db.users.find(u => u.email === email && u.createdAt !== user.createdAt);
+  res.json({ success: true, isNew });
 });
 
 app.get('/api/health', (req, res) => {
