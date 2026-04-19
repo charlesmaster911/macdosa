@@ -1026,22 +1026,18 @@ function closeModal() {
    - localStorage에 누적 (광고 분석용)
    - GA4 연동 준비 완료 (gtag 주석 해제만 하면 됨)
 ══════════════════════════════════════════ */
-const SESSION_ID = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+// 탭 내 세션 유지 (페이지 이동해도 같은 세션 ID)
+const SESSION_ID = sessionStorage.getItem('macdosa_sid') || (() => {
+  const id = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  sessionStorage.setItem('macdosa_sid', id);
+  return id;
+})();
 const sessionLog = [];
 
 function track(event, props = {}) {
-  const entry = {
-    event,
-    session: SESSION_ID,
-    ts: new Date().toISOString(),
-    url: location.href,
-    ref: document.referrer || 'direct',
-    ua: navigator.userAgent,
-    ...props
-  };
+  const entry = { event, session: SESSION_ID, ts: new Date().toISOString(), url: location.href, ref: document.referrer || 'direct', ...props };
   sessionLog.push(entry);
 
-  // localStorage 누적 (최근 200개 유지)
   try {
     const stored = JSON.parse(localStorage.getItem('macdosa_log') || '[]');
     stored.push(entry);
@@ -1049,13 +1045,14 @@ function track(event, props = {}) {
     localStorage.setItem('macdosa_log', JSON.stringify(stored));
   } catch(e) {}
 
-  // GA4 연동 (배포 시 활성화)
-  if (typeof gtag !== 'undefined') {
-    gtag('event', event, { ...props, session_id: SESSION_ID });
-  }
+  if (typeof gtag !== 'undefined') gtag('event', event, { ...props, session_id: SESSION_ID });
 
-  // 콘솔 디버그 (개발용)
-  console.debug('[맥도사 트랙]', event, props);
+  // 서버 저장 (fire-and-forget)
+  fetch('/api/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: SESSION_ID, event, data: props, page: 'index' })
+  }).catch(() => {});
 }
 
 /* ── 페이지 진입 ── */

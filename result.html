@@ -1231,11 +1231,24 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 
-// 최근 100개 이벤트만 유지 (localStorage 용량 보호)
+// 탭 내 세션 유지 (index → result 이동해도 같은 세션)
+const SESSION_ID = sessionStorage.getItem('macdosa_sid') || (() => {
+  const id = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  sessionStorage.setItem('macdosa_sid', id);
+  return id;
+})();
+
 function track(event, data = {}) {
   const log = JSON.parse(localStorage.getItem('macdosa_events') || '[]');
   log.push({ event, data, time: new Date().toISOString(), page: 'result' });
   localStorage.setItem('macdosa_events', JSON.stringify(log.slice(-100)));
+
+  // 서버 저장 (fire-and-forget)
+  fetch('/api/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: SESSION_ID, event, data, page: 'result' })
+  }).catch(() => {});
 }
 
 track('result_view', { url: urlParam, tier });

@@ -379,7 +379,7 @@ ${recentDeals || '아직 없음'}
    - 맥뮤지엄 중고가 추정 (신품의 70~80%)
 4. 타이밍: M4 출시 2024년 10월 기준 → 현재까지 개월수 계산
 
-━━━ JSON 형식으로만 응답 (```json 블록 포함 가능, 다른 텍스트 금지) ━━━
+━━━ JSON 형식으로만 응답 (json 코드블록 포함 가능, 다른 텍스트 금지) ━━━
 
 {
   "model": "정확한 모델명 (칩·메모리·스토리지 포함, 예: MacBook Pro 14인치 M4 Pro 24GB 1TB)",
@@ -635,7 +635,6 @@ app.get('/api/admin/stats', (req, res) => {
   const paidPurchases = db.purchases.filter(p => p.status === 'paid' || p.status === 'beta');
   const monthly = paidPurchases.filter(p => p.createdAt.startsWith(thisMonth));
 
-  // 연간 구독은 월 환산, 월간 구독은 원금 그대로
   const mrr = paidPurchases
     .filter(p => p.tier === 'pro')
     .reduce((sum, p) => sum + (p.amount === 99000 ? Math.round(99000 / 12) : p.amount), 0);
@@ -644,6 +643,46 @@ app.get('/api/admin/stats', (req, res) => {
     ? ((paidPurchases.length / db.analyses.length) * 100).toFixed(1)
     : 0;
 
+  // 고객 여정 — 이메일 기준으로 분석+구매 연결
+  const emailSet = new Set([
+    ...paidPurchases.filter(p => p.email).map(p => p.email),
+    ...db.analyses.filter(a => a.email).map(a => a.email),
+  ]);
+  const journeys = [...emailSet].map(email => {
+    const ua = db.analyses.filter(a => a.email === email);
+    const up = paidPurchases.filter(p => p.email === email);
+    const allTimes = [...ua, ...up].map(x => x.createdAt).sort();
+    return {
+      email,
+      analyses: ua.length,
+      purchases: up.length,
+      totalSpent: up.reduce((s, p) => s + p.amount, 0),
+      tier: up.some(p => p.tier === 'pro') ? 'pro' : up.length > 0 ? 'paid' : 'free',
+      firstSeen: allTimes[0] || null,
+      lastActivity: allTimes[allTimes.length - 1] || null,
+      models: [...new Set(ua.map(a => a.model).filter(Boolean))],
+    };
+  }).sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+
+  // AI 브레인 학습 현황
+  const deals = db.deals || [];
+  const modelCounts = {};
+  const storeSaves = {};
+  deals.forEach(d => {
+    if (d.model) modelCounts[d.model] = (modelCounts[d.model] || 0) + 1;
+    if (d.store && d.saveAmount) {
+      if (!storeSaves[d.store]) storeSaves[d.store] = { total: 0, count: 0 };
+      storeSaves[d.store].total += d.saveAmount;
+      storeSaves[d.store].count++;
+    }
+  });
+  const brainStats = {
+    totalDeals: deals.length,
+    topModels: Object.entries(modelCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([model, count]) => ({ model, count })),
+    topStores: Object.entries(storeSaves).sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count)).slice(0, 5).map(([store, v]) => ({ store, avgSave: Math.round(v.total / v.count) })),
+    lastUpdated: deals[deals.length - 1]?.date || null,
+  };
+
   res.json({
     totalAnalyses: db.analyses.length,
     totalPurchases: paidPurchases.length,
@@ -651,7 +690,21 @@ app.get('/api/admin/stats', (req, res) => {
     mrr,
     conversionRate,
     recentPurchases: paidPurchases.slice(-10).reverse(),
-    recentAnalyses: db.analyses.slice(-10).reverse()
+    recentAnalyses: db.analyses.slice(-10).reverse(),
+    journeys,
+    brainStats,
+    feedbacks: (db.feedbacks || []).slice(-20).reverse(),
+    sessions: (db.sessions || []).slice(-30).reverse().map(s => ({
+      id: s.id,
+      ip: s.ip,
+      email: s.email,
+      firstPage: s.firstPage,
+      createdAt: s.createdAt,
+      lastSeenAt: s.lastSeenAt,
+      eventCount: s.events.length,
+      path: s.events.map(e => e.event).join(' → '),
+      converted: s.events.some(e => ['unlock_complete', 'beta_join', 'payment_success'].includes(e.event)),
+    })),
   });
 });
 
@@ -747,6 +800,33 @@ app.post('/api/subscribe', (req, res) => {
   writeDB(db);
   const isNew = !db.users.find(u => u.email === email && u.createdAt !== user.createdAt);
   res.json({ success: true, isNew });
+});
+
+// POST /api/track — 클라이언트 행동 이벤트 서버 저장
+app.post('/api/track', (req, res) => {
+  const { sessionId, event, data, page } = req.body;
+  if (!sessionId || !event) return res.sendStatus(204);
+
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const db = readDB();
+  if (!db.sessions) db.sessions = [];
+
+  let session = db.sessions.find(s => s.id === sessionId);
+  if (!session) {
+    session = { id: sessionId, ip, email: null, firstPage: page || 'unknown', createdAt: new Date().toISOString(), lastSeenAt: new Date().toISOString(), events: [] };
+    db.sessions.push(session);
+  }
+
+  session.events.push({ event, data: data || {}, page: page || 'unknown', time: new Date().toISOString() });
+  session.lastSeenAt = new Date().toISOString();
+  if (data?.email && !session.email) session.email = data.email;
+
+  // 세션당 이벤트 최대 200개, 전체 세션 최대 2000개
+  if (session.events.length > 200) session.events = session.events.slice(-200);
+  if (db.sessions.length > 2000) db.sessions = db.sessions.slice(-2000);
+
+  writeDB(db);
+  res.sendStatus(204);
 });
 
 app.get('/api/health', (req, res) => {

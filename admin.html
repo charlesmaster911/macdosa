@@ -363,6 +363,93 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); -web
       </div>
     </div>
 
+    <!-- 고객 여정 -->
+    <div class="section-title">고객 여정 <span style="font-weight:400;text-transform:none;letter-spacing:0;">(이메일 기준)</span></div>
+    <div class="card" style="margin-bottom:28px;">
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>이메일</th>
+              <th>분석</th>
+              <th>구매</th>
+              <th>총 결제</th>
+              <th>티어</th>
+              <th>첫 방문</th>
+              <th>마지막 활동</th>
+              <th>관심 모델</th>
+            </tr>
+          </thead>
+          <tbody id="journeyTable">
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px;">로딩 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI 브레인 학습 현황 -->
+    <div class="section-title">AI 브레인 학습 현황</div>
+    <div class="two-col" style="margin-bottom:28px;">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">모델별 학습 건수</span>
+          <span style="font-size:11px;color:var(--text3)" id="brainTotalDeals">—</span>
+        </div>
+        <div style="padding:16px;" id="brainModelList">
+          <div style="color:var(--text3);font-size:13px;">로딩 중...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">판매처별 평균 절약액</span>
+        </div>
+        <div style="padding:16px;" id="brainStoreList">
+          <div style="color:var(--text3);font-size:13px;">로딩 중...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 고객 피드백 -->
+    <div class="section-title">고객 피드백 <span style="font-weight:400;text-transform:none;letter-spacing:0;">(개선 제안)</span></div>
+    <div class="card" style="margin-bottom:28px;">
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>시각</th>
+              <th>이메일</th>
+              <th>내용</th>
+            </tr>
+          </thead>
+          <tbody id="feedbackTable">
+            <tr><td colspan="3" style="text-align:center;color:var(--text3);padding:24px;">피드백 없음</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 세션 이동경로 -->
+    <div class="section-title">세션 이동경로 <span style="font-weight:400;text-transform:none;letter-spacing:0;">(서버 저장)</span></div>
+    <div class="card" style="margin-bottom:28px;">
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>진입</th>
+              <th>이메일</th>
+              <th>첫 페이지</th>
+              <th>이벤트 수</th>
+              <th>전환</th>
+              <th>이동경로</th>
+            </tr>
+          </thead>
+          <tbody id="sessionTable">
+            <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px;">로딩 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- 행동 로그 (localStorage 기반) -->
     <div class="section-title">사용자 행동 로그 <span style="font-weight:400;text-transform:none;letter-spacing:0;">(브라우저 캐시)</span></div>
     <div class="card" style="margin-bottom:28px;">
@@ -429,6 +516,10 @@ async function loadStats() {
   renderMrrChart(d.monthlyPurchases);
   renderPurchaseTable(d.recentPurchases);
   renderAnalysisTable(d.recentAnalyses);
+  renderJourneyTable(d.journeys || []);
+  renderBrainStats(d.brainStats || {});
+  renderFeedbackTable(d.feedbacks || []);
+  renderSessionTable(d.sessions || []);
   loadBehaviorLog();
 
   $('lastUpdated').textContent = new Date().toLocaleTimeString('ko-KR') + ' 업데이트';
@@ -546,6 +637,103 @@ function loadBehaviorLog() {
       <span class="event-label">${e.event}</span>
       <span class="event-value">${e.data ? JSON.stringify(e.data).slice(0, 40) : ''}</span>
     </div>`).join('');
+}
+
+function renderSessionTable(sessions) {
+  const body = $('sessionTable');
+  if (sessions.length === 0) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px;">세션 없음 — 사이트 방문 시 자동 수집됩니다</td></tr>';
+    return;
+  }
+  const EVENT_EMOJI = {
+    page_view: '👁', analysis_started: '🔍', result_view: '📊',
+    modal_open: '💳', unlock_complete: '✅', beta_join: '🌱',
+    payment_success: '💰', exit_intent: '⚡', scroll_depth: '↕',
+    url_pasted: '📋', url_input_focus: '⌨', section_view: '📌',
+    unlock_initiated: '🔑'
+  };
+  body.innerHTML = sessions.map(s => {
+    const pathShort = s.path.split(' → ').map(e => EVENT_EMOJI[e] || '·').join('');
+    return `<tr>
+      <td style="white-space:nowrap">${timeAgo(s.createdAt)}</td>
+      <td>${s.email ? maskEmail(s.email) : '<span style="color:var(--text3)">익명</span>'}</td>
+      <td><span class="pill pill-free">${s.firstPage}</span></td>
+      <td style="text-align:center">${s.eventCount}</td>
+      <td style="text-align:center">${s.converted ? '<span class="pill pill-paid">전환</span>' : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:13px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:2px" title="${s.path}">${pathShort}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderJourneyTable(journeys) {
+  const body = $('journeyTable');
+  if (journeys.length === 0) {
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px;">이메일로 분석/구매한 유저 없음</td></tr>';
+    return;
+  }
+  body.innerHTML = journeys.map(j => `
+    <tr>
+      <td>${maskEmail(j.email)}</td>
+      <td style="text-align:center">${j.analyses}</td>
+      <td style="text-align:center">${j.purchases}</td>
+      <td style="font-weight:600;color:var(--sage-light)">${j.totalSpent > 0 ? j.totalSpent.toLocaleString() + '원' : '—'}</td>
+      <td><span class="pill ${j.tier === 'pro' ? 'pill-pro' : j.tier === 'paid' ? 'pill-paid' : 'pill-free'}">${j.tier}</span></td>
+      <td style="color:var(--text2)">${j.firstSeen ? timeAgo(j.firstSeen) : '—'}</td>
+      <td style="color:var(--text2)">${j.lastActivity ? timeAgo(j.lastActivity) : '—'}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:12px">${j.models.length > 0 ? j.models[0] : '—'}</td>
+    </tr>`).join('');
+}
+
+function renderBrainStats(brain) {
+  $('brainTotalDeals').textContent = `누적 ${brain.totalDeals || 0}건`;
+
+  const modelEl = $('brainModelList');
+  if (!brain.topModels || brain.topModels.length === 0) {
+    modelEl.innerHTML = '<div style="color:var(--text3);font-size:13px;">학습 데이터 없음</div>';
+  } else {
+    const max = brain.topModels[0]?.count || 1;
+    modelEl.innerHTML = brain.topModels.map(m => `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%">${m.model}</span>
+          <strong style="font-size:12px;color:var(--text)">${m.count}건</strong>
+        </div>
+        <div style="height:4px;background:var(--surface2);border-radius:2px;">
+          <div style="height:100%;border-radius:2px;background:var(--blue);width:${Math.round(m.count/max*100)}%;transition:width 0.8s ease"></div>
+        </div>
+      </div>`).join('');
+  }
+
+  const storeEl = $('brainStoreList');
+  if (!brain.topStores || brain.topStores.length === 0) {
+    storeEl.innerHTML = '<div style="color:var(--text3);font-size:13px;">학습 데이터 없음</div>';
+  } else {
+    const maxSave = brain.topStores[0]?.avgSave || 1;
+    storeEl.innerHTML = brain.topStores.map(s => `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:12px;color:var(--text2)">${s.store}</span>
+          <strong style="font-size:12px;color:var(--sage-light)">평균 ${Math.round(s.avgSave/10000)}만원</strong>
+        </div>
+        <div style="height:4px;background:var(--surface2);border-radius:2px;">
+          <div style="height:100%;border-radius:2px;background:var(--sage);width:${Math.round(s.avgSave/maxSave*100)}%;transition:width 0.8s ease"></div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function renderFeedbackTable(feedbacks) {
+  const body = $('feedbackTable');
+  if (feedbacks.length === 0) {
+    body.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:24px;">피드백 없음</td></tr>';
+    return;
+  }
+  body.innerHTML = feedbacks.map(f => `
+    <tr>
+      <td style="white-space:nowrap">${timeAgo(f.createdAt)}</td>
+      <td>${f.email ? maskEmail(f.email) : '익명'}</td>
+      <td style="color:var(--text2)">${f.content}</td>
+    </tr>`).join('');
 }
 
 function timeAgo(iso) {
