@@ -84,7 +84,24 @@ main { padding-top: 44px; }
 
 /* 天地人 CARDS */
 .tiandiren-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px; }
-@media (max-width: 600px) { .tiandiren-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .tiandiren-grid { grid-template-columns: 1fr; gap: 8px; }
+  .container { padding: 20px 16px 80px; }
+  .result-bar { padding: 16px 16px; }
+  .result-bar .save-amount { font-size: 36px; }
+  .tdr-card { padding: 16px 14px; border-radius: 14px; }
+  .tdr-title { font-size: 15px; }
+  .tdr-body { font-size: 13px; line-height: 1.6; word-break: keep-all; }
+  .verdict-box { flex-direction: column; gap: 10px; padding: 18px 16px; border-radius: 14px; }
+  .verdict-text h3 { font-size: 16px; line-height: 1.4; word-break: keep-all; }
+  .verdict-text p { font-size: 13px; line-height: 1.65; word-break: keep-all; }
+  .paths-card { border-radius: 14px; }
+  .path-item { padding: 14px 14px; }
+  .path-store { font-size: 14px; }
+  .price-main { font-size: 15px; }
+  .section-title { font-size: 12px; margin-top: 24px; margin-bottom: 8px; }
+  .chart-card { padding: 16px 12px; border-radius: 14px; }
+}
 
 .tdr-card {
   background: var(--apple-white);
@@ -101,7 +118,7 @@ main { padding-top: 44px; }
   margin-bottom: 4px;
 }
 .tdr-title { font-size: 16px; font-weight: 600; color: var(--apple-text); margin-bottom: 8px; }
-.tdr-body { font-size: 13px; color: var(--apple-text2); line-height: 1.55; }
+.tdr-body { font-size: 13px; color: var(--apple-text2); line-height: 1.6; word-break: keep-all; }
 .tdr-value {
   display: inline-block;
   background: var(--sage-light);
@@ -123,8 +140,8 @@ main { padding-top: 44px; }
   display: flex; align-items: flex-start; gap: 16px;
 }
 .verdict-icon { font-size: 36px; flex-shrink: 0; }
-.verdict-text h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-.verdict-text p { font-size: 14px; color: rgba(245,245,247,0.75); line-height: 1.6; }
+.verdict-text h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; word-break: keep-all; line-height: 1.4; }
+.verdict-text p { font-size: 14px; color: rgba(245,245,247,0.75); line-height: 1.65; word-break: keep-all; }
 .verdict-badge {
   display: inline-block;
   background: #34C759;
