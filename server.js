@@ -103,8 +103,14 @@ async function searchCoupang(query) {
       });
       if (res.ok) {
         const html = await res.text();
-        const titleMatch = html.match(/"name"\s*:\s*"([^"]+)"/) || html.match(/<h2[^>]*>([^<]+)<\/h2>/);
-        const priceMatch = html.match(/"lowestPrice"\s*:\s*(\d+)/) || html.match(/"deliveryFee"\s*:\s*(\d+)/);
+        const titleMatch = html.match(/"name"\s*:\s*"([^"]+)"/) || 
+                           html.match(/"productName"\s*:\s*"([^"]+)"/) ||
+                           html.match(/<h1[^>]*>([^<]+)<\/h1>/) ||
+                           html.match(/<h2[^>]*>([^<]+)<\/h2>/);
+        const priceMatch = html.match(/"lowestPrice"\s*:\s*(\d+)/) || 
+                           html.match(/"price"\s*:\s*(\d+)/) ||
+                           html.match(/"originalPrice"\s*:\s*(\d+)/) ||
+                           html.match(/"deliveryFee"\s*:\s*(\d+)/);
         if (titleMatch && priceMatch) {
           return [{ title: titleMatch[1], price: parseInt(priceMatch[1]), link: query, mall: '쿠팡', source: 'coupang' }];
         }
@@ -178,7 +184,15 @@ function analyzePricing(items) {
   const timing = lowest < avg * 0.85 ? '🔥 지금 구매 (최저가 기록)' : lowest < avg * 0.92 ? '✅ 지금 사세요 (평균 대비 8-15% 절감)' : '⏳ 가격 인하 기다리기';
   const malls = [...new Set(items.map(i => i.mall))].slice(0, 3);
   const shippingNote = lowest > 100000 ? '배송비 포함' : '배송비 추가 예상';
-  return { lowest, avg, discount, timing, malls, shippingNote, itemCount: items.length };
+  
+  const storageMatch = items[0]?.title?.match(/(\d+)gb/i)?.[1];
+  const storageRecommendation = storageMatch && parseInt(storageMatch) < 512 
+    ? '💡 512GB 이상으로 업그레이드 권장 (대용량 작업에 필수)' 
+    : '';
+  
+  const shoppingPaths = items.length > 0 ? items.slice(0, 3).map((i, idx) => `${idx + 1}. ${i.mall}: ${i.price?.toLocaleString()}원`) : [];
+  
+  return { lowest, avg, discount, timing, malls, shippingNote, storageRecommendation, shoppingPaths, itemCount: items.length };
 }
 
 // 제품 종류 감지
@@ -283,7 +297,7 @@ async function scrapeProductInfo(url) {
 function callClaudeCLI(prompt) {
   return new Promise((resolve, reject) => {
     const proc = spawn('/usr/local/bin/claude', ['-p', prompt, '--model', 'claude-haiku-4-5-20251001', '--output-format', 'text', '--dangerously-skip-permissions'], {
-      env: process.env, cwd: '/tmp'
+      env: process.env, cwd: '/tmp', stdio: ['ignore', 'pipe', 'pipe']
     });
     let out = '', err = '';
     proc.stdout.on('data', d => { out += d; });
@@ -553,7 +567,11 @@ app.post('/api/analyze', async (req, res) => {
     const titleKnown = productInfo.title && productInfo.title !== '스크랩 실패' && productInfo.title !== '제목 없음';
     const isNonApple = titleKnown && /galaxy|갤럭시|windows|갤탭|LG그램|삼성노트북|레노버|ThinkPad|XPS|Surface\s|델\s|HP\s/i.test(productInfo.title);
     if (isNonApple) {
-      return res.status(400).json({ error: '애플 제품만 분석 가능합니다. (MacBook, iPhone, iPad, AirPods, Apple Watch)', code: 'NOT_APPLE' });
+      return res.status(400).json({
+        error: '맥도사는 애플 제품 전문입니다 🍎\nMacBook · iPhone · iPad · AirPods · Apple Watch\n\n혹시 애플 제품으로 환승을 고민 중이시라면,\n위 제품 모델명이나 링크를 입력해보세요!',
+        code: 'NOT_APPLE',
+        suggestions: ['MacBook Air M3', 'iPhone 16', 'iPad Pro M4', 'AirPods Pro 2세대', 'Apple Watch Series 10']
+      });
     }
 
     // 검색결과/카탈로그 URL 서버측 차단
@@ -567,10 +585,9 @@ app.post('/api/analyze', async (req, res) => {
 
     // 스크랩 실패 + 모델 특정 불가 → 에러 반환 (AI 환각 방지)
     const scrapeFailed = !titleKnown || productInfo.title === '스크랩 실패';
-    const isCoupang = isUrl && /coupang\.com\/vp\/products\//.test(url);
-    if (scrapeFailed && !isCoupang && isUrl) {
+    if (scrapeFailed && isUrl) {
       return res.status(400).json({
-        error: '이 URL은 상품 정보를 읽을 수 없습니다.\n쿠팡·애플 공식·다나와 상품 페이지 URL을 사용해주세요.',
+        error: 'URL에서 상품 정보를 읽지 못했어요.\n스크린샷을 찍어서 업로드하면 AI가 직접 분석해드립니다.',
         code: 'SCRAPE_FAILED'
       });
     }
@@ -647,19 +664,47 @@ app.post('/api/analyze', async (req, res) => {
       : null;
     const isAlreadyLowest = customerPrice && naverLowest && customerPrice <= naverLowest;
 
+    // 네이버 API 없을 때 브레인 데이터로 폴백 paths 생성
+    const brainFallbackPaths = (() => {
+      if (naverItems && naverItems.length > 0) return [];
+      const typedDeals = (db.deals || []).filter(d =>
+        d.productType === productType && d.finalPrice && d.store
+      ).sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 20);
+      if (typedDeals.length < 2) return [];
+      const byStore = {};
+      typedDeals.forEach(d => {
+        if (!byStore[d.store] || byStore[d.store].finalPrice > d.finalPrice) byStore[d.store] = d;
+      });
+      return Object.values(byStore).sort((a, b) => a.finalPrice - b.finalPrice).slice(0, 5).map((d, i) => ({
+        rank: i + 1, store: d.store, isUsed: d.isUsed || false, usedGrade: null,
+        dealType: d.dealType || '학습 데이터', cardName: d.cardName || null,
+        discountRate: d.discountRate || null, couponInfo: d.couponInfo || null,
+        condition: (d.condition || '') + ' (브레인 학습 데이터 기반)',
+        price: d.price, finalPrice: d.finalPrice, saveAmount: d.saveAmount || 0, url: d.storeUrl || null,
+      }));
+    })();
+
     const naverPriceBlock = (() => {
-      if (!naverItems || naverItems.length === 0) return '네이버 API 데이터 없음 (학습 데이터로 추정)';
+      if (!naverItems || naverItems.length === 0) {
+        if (brainFallbackPaths.length > 0) {
+          const lines = brainFallbackPaths.map(p =>
+            `  - ${p.store} | ${p.finalPrice.toLocaleString()}원 | ${p.dealType} | ${p.condition}`);
+          return `━━━ 브레인 학습 데이터 (네이버 API 미응답 시 폴백) ━━━\n${lines.join('\n')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+        }
+        return '네이버 API 데이터 없음 (학습 데이터로 추정)';
+      }
       const lines = naverItems.slice(0, 8).map(item => {
         const title = item.title.replace(/<[^>]+>/g, '');
         return `  - ${item.mallName} | ${parseInt(item.lprice).toLocaleString()}원 | ${title} | ${item.link}`;
       });
-      return `━━━ 네이버 쇼핑 실시간 최저가 (API 직접 조회) ━━━
+      const block = `━━━ 네이버 쇼핑 실시간 최저가 (API 직접 조회) ━━━
 검색어: "${modelQuery}"
 ${lines.join('\n')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 고객 입력 가격: ${customerPrice ? customerPrice.toLocaleString()+'원' : '미확인'}
 네이버 최저가: ${naverLowest ? naverLowest.toLocaleString()+'원' : '미확인'}
 가격 비교 결과: ${isAlreadyLowest ? '✅ 이미 최저가 (고객이 잘 찾음)' : naverLowest && customerPrice ? `⚡ ${(customerPrice - naverLowest).toLocaleString()}원 더 절약 가능` : '비교 불가'}`;
+      return block;
     })();
 
     const today_str = new Date().toISOString().slice(0,10);
@@ -670,11 +715,17 @@ ${lines.join('\n')}
 - SKT/KT/LGU+ 공시지원금 vs 선택약정 25% 중 유리한 쪽 명시
 - 자급제 vs 통신사 약정 24개월 총비용 비교 (요금제 포함)
 - 현대카드·삼성카드·KB카드 즉시할인 조건 반드시 paths에 포함
-- paths 1위: 자급제 최저가 (카드할인 적용), 2-3위: 통신사 공시지원금 추천 조합`,
-      ipad: `※ iPad 분석 주의사항:
-- Wi-Fi vs Cellular 모델 구분
-- 애플 교육할인 적용 여부
-- 쿠팡/11번가/애플공식 가격 비교`,
+- paths 1위: 자급제 최저가 (카드할인 적용), 2-3위: 통신사 공시지원금 추천 조합
+- ★★★ 예산 배려 필수: 분석 제품이 90만원 초과 시, paths 마지막에 반드시 포함:
+  • iPhone SE 4세대 (2025 출시, 89만원~, A18칩, 6.1인치, 예산 절약 대안)
+  • 중고 iPhone 15 (번개장터/중고나라 70~85만원대, 직전 세대)
+  verdict.desc에 예산 맞는 대안 한 줄 언급 필수`,
+      ipad: `※ iPad 분석 필수 포함사항:
+- Wi-Fi vs Cellular 모델 구분 (가격차 10~15만원)
+- 애플 교육할인 적용 여부 (학생·교직원 10% 추가 할인)
+- 법인카드·회사카드 할인: 현대카드M 10%·KB국민카드 5%·삼성카드 7% 즉시할인
+- 쿠팡/11번가/애플공식/다나와 가격 비교
+- paths에 반드시: 1위 최저가, 2위 카드할인 조합, 3위 애플공식(학생/법인)`,
       mac: `※ Mac 분석 주의사항:
 - 카드사 즉시할인 (삼성/현대/롯데카드)
 - 교육할인 vs 일반가 비교
@@ -817,23 +868,20 @@ ${recentDeals || '없음'}
       };
     }
 
-    // paths 폴백 — AI가 빈 배열 반환 시 네이버 데이터로 채움
-    if ((!analysis.paths || analysis.paths.length === 0) && naverItems && naverItems.length > 0) {
-      analysis.paths = naverItems.slice(0, 5).map((item, i) => ({
-        rank: i + 1,
-        store: item.mallName,
-        isUsed: false,
-        usedGrade: null,
-        dealType: '최저가',
-        cardName: null,
-        discountRate: null,
-        couponInfo: null,
-        condition: '네이버 쇼핑 최저가 기준',
-        price: parseInt(item.lprice),
-        finalPrice: parseInt(item.lprice),
-        saveAmount: customerPrice ? Math.max(0, customerPrice - parseInt(item.lprice)) : 0,
-        url: item.link,
-      }));
+    // paths 폴백 — AI가 빈 배열 반환 시 네이버 → 브레인 순으로 채움
+    if (!analysis.paths || analysis.paths.length === 0) {
+      if (naverItems && naverItems.length > 0) {
+        analysis.paths = naverItems.slice(0, 5).map((item, i) => ({
+          rank: i + 1, store: item.mallName, isUsed: false, usedGrade: null,
+          dealType: '최저가', cardName: null, discountRate: null, couponInfo: null,
+          condition: '네이버 쇼핑 최저가 기준',
+          price: parseInt(item.lprice), finalPrice: parseInt(item.lprice),
+          saveAmount: customerPrice ? Math.max(0, customerPrice - parseInt(item.lprice)) : 0,
+          url: item.link,
+        }));
+      } else if (brainFallbackPaths.length > 0) {
+        analysis.paths = brainFallbackPaths;
+      }
     }
 
     // paths finalPrice 보완 — 0이거나 없으면 네이버 데이터로 채움

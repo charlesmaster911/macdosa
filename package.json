@@ -5,7 +5,11 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "generate": "node generate_images.mjs",
-    "open": "open index.html"
+    "open": "open index.html",
+    "qa": "node test/qa-loop.js",
+    "qa:5": "node test/qa-loop.js 5",
+    "sim": "node test/customer-sim.js",
+    "sim:5": "node test/customer-sim.js 5"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

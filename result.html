@@ -839,10 +839,10 @@ async function fetchAndRender() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      if (err.code === 'NOT_MACBOOK') {
-        showError('맥북 상품만 분석 가능합니다 🧙‍♂️\n아이폰·아이패드·윈도우 노트북은 지원하지 않습니다.\n맥북 쿠팡·애플·다나와 상품 페이지 URL을 입력해주세요.');
+      if (err.code === 'NOT_MACBOOK' || err.code === 'NOT_APPLE') {
+        showNotApple(err.suggestions || []);
       } else if (err.code === 'SCRAPE_FAILED') {
-        showError('상품 정보를 읽을 수 없는 URL입니다 🔍\n쿠팡·애플 공식·다나와 상품 페이지 URL을 사용해주세요.\n(네이버 카탈로그·검색결과 페이지는 지원하지 않습니다)');
+        showScrapeFailed();
       } else {
         showError(err.error || '분석 중 오류가 발생했습니다.');
       }
@@ -859,14 +859,75 @@ async function fetchAndRender() {
   }
 }
 
+function showNotApple(suggestions) {
+  const chips = (suggestions || []).map(s =>
+    `<a href="/?q=${encodeURIComponent(s)}" style="display:inline-block;background:#F5F5F7;border:1px solid #D2D2D7;border-radius:20px;padding:8px 16px;font-size:14px;color:#1D1D1F;text-decoration:none;margin:4px;">${s}</a>`
+  ).join('');
+  document.querySelector('main').innerHTML = `
+    <div style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 22px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:16px;">🍎</div>
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:10px;">맥도사는 애플 제품 전문입니다</h2>
+      <p style="font-size:15px;color:#6E6E73;margin-bottom:8px;">MacBook · iPhone · iPad · AirPods · Apple Watch</p>
+      <p style="font-size:15px;color:#6E6E73;margin-bottom:24px;">혹시 애플 제품도 고민 중이시라면 아래에서 바로 분석해보세요!</p>
+      ${chips ? `<div style="margin-bottom:28px;">${chips}</div>` : ''}
+      <a href="/" style="background:#1A7040;color:#fff;padding:12px 28px;border-radius:980px;text-decoration:none;font-size:15px;font-weight:500;">다른 제품 분석하기</a>
+    </div>`;
+}
+
 function showError(msg) {
   document.querySelector('main').innerHTML = `
     <div style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 22px;text-align:center;">
       <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
       <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">분석 실패</h2>
-      <p style="font-size:15px;color:#6E6E73;margin-bottom:24px;">${msg}</p>
+      <p style="font-size:15px;color:#6E6E73;white-space:pre-line;margin-bottom:24px;">${msg}</p>
       <a href="/" style="background:#1A7040;color:#fff;padding:12px 28px;border-radius:980px;text-decoration:none;font-size:15px;font-weight:500;">다시 시도하기</a>
     </div>`;
+}
+
+function showScrapeFailed() {
+  document.querySelector('main').innerHTML = `
+    <div style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 22px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:10px;">URL에서 상품 정보를 읽지 못했어요</h2>
+      <p style="font-size:15px;color:#6E6E73;margin-bottom:8px;">쿠팡·네이버 일부 페이지는 봇 차단으로 접근이 막혀 있습니다.</p>
+      <p style="font-size:15px;color:#6E6E73;margin-bottom:32px;">상품 페이지 <strong>스크린샷을 찍어서 업로드</strong>하면 AI가 직접 읽어드립니다.</p>
+      <input type="file" id="scrapedScreenshot" accept="image/*" style="display:none" onchange="handleScrapedScreenshot(this)">
+      <button onclick="document.getElementById('scrapedScreenshot').click()"
+        style="background:#1A7040;color:#fff;padding:14px 32px;border-radius:980px;border:none;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:16px;">
+        📷 스크린샷으로 다시 분석
+      </button>
+      <div id="scrapedStatus" style="font-size:14px;color:#6E6E73;display:none;margin-bottom:16px;"></div>
+      <a href="/" style="font-size:14px;color:#6E6E73;text-decoration:underline;">URL 다시 입력하기</a>
+    </div>`;
+}
+
+async function handleScrapedScreenshot(input) {
+  if (!input.files || !input.files[0]) return;
+  const statusEl = document.getElementById('scrapedStatus');
+  statusEl.style.display = 'block';
+  statusEl.textContent = '📷 이미지 분석 중...';
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    const mediaType = file.type || 'image/jpeg';
+    try {
+      const res = await fetch('/api/extract-screenshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_base64: base64, media_type: mediaType })
+      });
+      const data = await res.json();
+      if (data.error) { statusEl.textContent = '❌ ' + data.error; return; }
+      const params = new URLSearchParams({ url: 'screenshot' });
+      if (data.title) params.set('scraped_title', data.title);
+      if (data.price) params.set('scraped_price', data.price);
+      window.location.href = '/result?' + params.toString();
+    } catch (err) {
+      statusEl.textContent = '❌ 오류: ' + err.message;
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 fetchAndRender();
@@ -966,6 +1027,9 @@ function initResult(data, serverTier) {
     renderLockedPaths(data.paths.slice(1));
   }
 
+  // 카드 할인 동적 렌더링
+  if (data.cards && data.cards.length > 0) renderCards(data.cards);
+
   // 중고 시장 섹션
   if (data.usedMarket) renderUsedMarket(data.usedMarket, data.currentPrice);
 
@@ -979,6 +1043,31 @@ function initResult(data, serverTier) {
       vatRows[3].querySelector('.value').textContent = `+${data.vatRefund.toLocaleString()}원 ↑`;
     }
   }
+}
+
+// 카드 할인 목록 렌더링
+function renderCards(cards) {
+  const list = document.getElementById('cardsList');
+  if (!list || !cards || cards.length === 0) return;
+  const shortName = (name) => {
+    if (/현대|hyundai/i.test(name)) return '현대';
+    if (/신한|shinhan/i.test(name)) return '신한';
+    if (/하나|hana/i.test(name)) return '하나';
+    if (/KB|국민/i.test(name)) return 'KB';
+    if (/삼성|samsung/i.test(name)) return '삼성';
+    if (/롯데|lotte/i.test(name)) return '롯데';
+    if (/NH|농협/i.test(name)) return 'NH';
+    return name.slice(0, 2);
+  };
+  list.innerHTML = cards.map(c => `
+    <div class="card-item">
+      <div class="card-logo" style="background:${c.color || '#888'}">${shortName(c.name)}</div>
+      <div class="card-info">
+        <div class="card-name">${c.name}</div>
+        <div class="card-condition">${c.condition || ''}</div>
+      </div>
+      <div class="card-discount">${c.discount || ''}</div>
+    </div>`).join('');
 }
 
 // 중고 시장 참고 정보

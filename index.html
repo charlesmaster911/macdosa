@@ -660,19 +660,30 @@ footer {
     <!-- URL 입력창 — 구글처럼 첫 화면에서 바로 -->
     <div class="url-input-wrap" style="margin-bottom:10px">
       <input class="url-input" type="text" id="heroInput"
-        placeholder="보고 있는 맥북 상품 페이지 URL을 붙여넣으세요" />
+        placeholder="상품 페이지 URL 또는 맥북/아이폰 스펙 입력" />
       <button class="url-submit" onclick="startAnalysis()">무료로 분석하기</button>
+    </div>
+    <!-- 스크린샷 업로드 -->
+    <div style="text-align:center;margin-bottom:14px">
+      <input type="file" id="screenshotInput" accept="image/*" style="display:none" onchange="handleScreenshot(this)">
+      <button onclick="document.getElementById('screenshotInput').click()" id="screenshotBtn"
+        style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(245,245,247,0.7);
+               font-size:13px;padding:7px 18px;border-radius:20px;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;"
+        onmouseover="this.style.background='rgba(255,255,255,0.14)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        📷 <span id="screenshotBtnText">URL 대신 스크린샷으로 분석</span>
+      </button>
+      <div id="screenshotStatus" style="font-size:12px;color:rgba(245,245,247,0.5);margin-top:6px;display:none"></div>
     </div>
     <!-- 입력 가이드 -->
     <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:18px">
       <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
-        ✅ <span>쿠팡 상품 페이지</span>
-      </span>
-      <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
-        ✅ <span>네이버 상품 상세</span>
+        ✅ <span>쿠팡 · 네이버 상품 페이지</span>
       </span>
       <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
         ✅ <span>다나와 · 애플 스토어</span>
+      </span>
+      <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
+        ✅ <span>아이폰 · 아이패드</span>
       </span>
       <span style="font-size:12px;color:rgba(245,245,247,0.35);display:flex;align-items:center;gap:5px;">
         ❌ <span>검색결과 페이지 ✗</span>
@@ -1122,6 +1133,58 @@ function showUrlWarning(msg) {
   toast.style.opacity = '1';
   clearTimeout(toast._t);
   toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+}
+
+/* ── 스크린샷 업로드 → AI 텍스트 추출 → 분석 ── */
+async function handleScreenshot(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('screenshotStatus');
+  const btnText = document.getElementById('screenshotBtnText');
+  statusEl.style.display = 'block';
+  statusEl.textContent = '📷 AI가 이미지를 읽는 중...';
+  btnText.textContent = '분석 중...';
+
+  try {
+    // FileReader로 base64 변환
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const mediaType = file.type || 'image/jpeg';
+    const res = await fetch('/api/extract-screenshot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_base64: base64, media_type: mediaType })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.title) {
+      statusEl.textContent = '이미지에서 상품 정보를 찾지 못했습니다. URL을 직접 입력해주세요.';
+      btnText.textContent = 'URL 대신 스크린샷으로 분석';
+      return;
+    }
+
+    // 추출 성공 → 결과 페이지로 이동
+    statusEl.textContent = `✅ "${data.title.slice(0, 40)}..." 인식 완료 → 분석 시작!`;
+    track('screenshot_analyzed', { store: data.store });
+    setTimeout(() => {
+      const params = new URLSearchParams({
+        url: 'screenshot',
+        scraped_title: data.title,
+        ...(data.price ? { scraped_price: String(data.price) } : {})
+      });
+      window.location.href = `/result?${params.toString()}`;
+    }, 800);
+  } catch (e) {
+    statusEl.textContent = '오류가 발생했습니다. URL을 직접 입력해주세요.';
+    btnText.textContent = 'URL 대신 스크린샷으로 분석';
+    input.value = '';
+  }
 }
 
 /* ── 분석 시작 → result 페이지로 이동 ── */
