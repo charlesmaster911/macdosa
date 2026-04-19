@@ -658,10 +658,25 @@ footer {
     </script>
 
     <!-- URL 입력창 — 구글처럼 첫 화면에서 바로 -->
-    <div class="url-input-wrap" style="margin-bottom:14px">
+    <div class="url-input-wrap" style="margin-bottom:10px">
       <input class="url-input" type="text" id="heroInput"
-        placeholder="맥북 URL을 붙여넣으세요 (Apple, 쿠팡, 네이버 모두 가능)" />
+        placeholder="보고 있는 맥북 상품 페이지 URL을 붙여넣으세요" />
       <button class="url-submit" onclick="startAnalysis()">무료로 분석하기</button>
+    </div>
+    <!-- 입력 가이드 -->
+    <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+      <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
+        ✅ <span>쿠팡 상품 페이지</span>
+      </span>
+      <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
+        ✅ <span>네이버 상품 상세</span>
+      </span>
+      <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
+        ✅ <span>다나와 · 애플 스토어</span>
+      </span>
+      <span style="font-size:12px;color:rgba(245,245,247,0.35);display:flex;align-items:center;gap:5px;">
+        ❌ <span>검색결과 페이지 ✗</span>
+      </span>
     </div>
     <p class="url-hint" style="margin-bottom:28px">맥도사는 Mac의 맥(脈)을 읽습니다. 30일 시세 흐름과 현재 딜을 3단계로 분석해 당신이 살 타이밍을 정확히 짚어드립니다.</p>
 
