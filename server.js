@@ -61,6 +61,39 @@ app.use((req, res, next) => {
   next();
 });
 
+// 네이버 쇼핑 검색 API — 실시간 최저가 조회
+async function searchNaverShopping(query) {
+  const clientId = process.env.NAVER_CLIENT_ID;
+  const clientSecret = process.env.NAVER_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+  try {
+    const url = `https://openapi.naver.com/v1/search/shop.json?query=${encodeURIComponent(query)}&display=10&sort=lprice`;
+    const res = await fetch(url, {
+      headers: { 'X-Naver-Client-Id': clientId, 'X-Naver-Client-Secret': clientSecret },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.items || [];
+  } catch (e) {
+    console.error('네이버 쇼핑 API 오류:', e.message);
+    return null;
+  }
+}
+
+// 제목에서 맥북 모델 검색 쿼리 추출
+function extractMacModelQuery(title) {
+  if (!title || title === '스크랩 실패') return '맥북';
+  const clean = title.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  // M칩 + 인치 + 메모리 패턴 추출
+  const chip = clean.match(/M\d[\s]?(Pro|Max|Ultra)?/i)?.[0] || '';
+  const inch = clean.match(/(\d{2}[\s]?인치|\d{2}")/i)?.[0] || '';
+  const mem = clean.match(/(\d+GB)/i)?.[0] || '';
+  const storage = clean.match(/(\d+TB|\d+GB\s*(SSD)?)/gi)?.slice(-1)?.[0] || '';
+  const base = /air/i.test(clean) ? 'MacBook Air' : /pro/i.test(clean) ? 'MacBook Pro' : '맥북';
+  return [base, chip, inch, mem, storage].filter(Boolean).join(' ').trim() || '맥북';
+}
+
 // URL 스크랩 — 상품 제목/가격/설명 추출 (Claude에 컨텍스트 제공용)
 async function scrapeProductInfo(url) {
   try {
@@ -358,18 +391,31 @@ app.post('/api/analyze', async (req, res) => {
       return hints;
     })();
 
+    // 네이버 쇼핑 API 실시간 가격 조회
+    const modelQuery = extractMacModelQuery(productInfo.title);
+    const naverItems = await searchNaverShopping(modelQuery);
+    const naverPriceBlock = (() => {
+      if (!naverItems || naverItems.length === 0) return '';
+      const lines = naverItems.slice(0, 8).map(item => {
+        const title = item.title.replace(/<[^>]+>/g, '');
+        return `  - ${item.mallName} | ${parseInt(item.lprice).toLocaleString()}원 | ${title} | ${item.link}`;
+      });
+      return `━━━ 네이버 쇼핑 실시간 최저가 (API 직접 조회) ━━━\n검색어: "${modelQuery}"\n${lines.join('\n')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+    })();
+
     const today_str = new Date().toISOString().slice(0,10);
-    const prompt = `맥북 최저가 구매 분석 태스크입니다. 아래 상품 정보를 분석해서 가장 싸게 살 수 있는 방법을 찾아주세요.
-목표: 신품·중고·카드할인·원데이딜 등 모든 채널의 가격을 추정해서 최저 구매 경로를 JSON으로 반환.
+    const prompt = `맥북 최저가 구매 분석 태스크입니다. 아래 실시간 가격 데이터를 기반으로 최저 구매 경로를 JSON으로 반환하세요.
 
 오늘 날짜: ${today_str}
 분석 URL: ${url}
 
-━━━ 스크랩된 상품 정보 (실제 페이지에서 추출) ━━━
+━━━ 스크랩된 상품 정보 ━━━
 제목: ${productInfo.title}
-현재 페이지 가격: ${productInfo.price ? productInfo.price.toLocaleString() + '원' : '가격 미추출 (제목으로 모델 파악 후 시세 추정)'}
+현재 페이지 가격: ${productInfo.price ? productInfo.price.toLocaleString() + '원' : '미추출'}
 설명: ${productInfo.description}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${naverPriceBlock}
 
 ${brainIntel || ''}
 
@@ -378,10 +424,10 @@ ${learnedIntel || ''}
 [최근 실제 딜 원본 (최근 30건)]
 ${recentDeals || '아직 없음'}
 
-━━━ 필수 규칙 (위반 시 분석 실패 처리됨) ━━━
-1. 너는 맥북 시세와 한국 유통 구조를 학습 데이터로 알고 있다. 반드시 그 지식으로 추정값을 채워라.
-2. "정보 부족", "재수집 필요", "확인 불가", "알 수 없음" 같은 표현 절대 금지.
-3. currentPrice가 null이면: 제품명으로 한국 시장 현재 시세를 추정해서 숫자로 채워라.
+━━━ 필수 규칙 ━━━
+1. 네이버 쇼핑 실시간 데이터가 있으면 반드시 그 가격을 우선 사용해라. AI 추정 금지.
+2. paths의 url 필드: 네이버 API에서 받은 실제 링크(item.link)를 넣어라. 없으면 null.
+3. currentPrice: 네이버 최저가 또는 스크랩 가격 중 낮은 값.
 4. paths 배열은 반드시 최소 3개 이상. 빈 배열 [] 절대 금지.
 5. 응답은 JSON 코드블록만. 설명 텍스트 금지.
 
