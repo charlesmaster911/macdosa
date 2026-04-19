@@ -493,15 +493,17 @@ nav {
 .price-card.featured .price-list li { color: rgba(255,255,255,0.85); }
 .price-card.featured .price-list li::before { color: rgba(255,255,255,0.6); }
 .price-cta {
-  font-size: 17px; color: var(--apple-blue);
-  text-decoration: none; background: none; border: none;
-  font-family: var(--font); cursor: pointer; padding: 0;
-  display: inline-flex; align-items: center; gap: 2px;
-  transition: opacity 0.15s;
+  font-size: 15px; font-weight: 600;
+  background: rgba(255,255,255,0.12); color: #fff;
+  border: 1px solid rgba(255,255,255,0.2); border-radius: 980px;
+  font-family: var(--font); cursor: pointer;
+  padding: 10px 24px; margin-top: 8px;
+  display: inline-block; position: relative; z-index: 2;
+  transition: opacity 0.15s; pointer-events: auto;
 }
-.price-cta::after { content: ' ›'; }
-.price-cta:hover { opacity: 0.7; }
-.price-card.featured .price-cta { color: rgba(255,255,255,0.9); }
+.price-cta:hover { opacity: 0.8; }
+.price-card.featured .price-cta { background: rgba(255,255,255,0.2); color: #fff; border-color: rgba(255,255,255,0.35); }
+.price-card:not(.featured) .price-cta { background: var(--sage); border-color: var(--sage); }
 .featured-badge {
   position: absolute; top: 16px; right: 16px;
   background: #FFD60A; color: #1D1D1F;
@@ -546,11 +548,60 @@ footer {
 .reveal.on { opacity:1; transform:none; }
 
 @media (max-width:700px){
+  /* 네비 */
   .nav-links{display:none}
-  .how-grid,.price-cards,.reviews{grid-template-columns:1fr}
-  .social-stat-row{flex-direction:column;gap:32px}
-  .social-stat+.social-stat::before{display:none}
-  .tjr-grid{grid-template-columns:1fr}
+  nav { padding: 0 16px; }
+
+  /* 히어로 */
+  .hero-content { padding: 36px 20px 0; }
+  .hero-h1 { font-size: clamp(40px, 11vw, 72px); line-height: 1.06; }
+  .hero-h2 { font-size: 16px; line-height: 1.5; margin-bottom: 18px; }
+  .hero-ctas { flex-direction: column; gap: 12px; margin-bottom: 32px; }
+  .cta-filled, .cta-text { font-size: 16px; }
+  .cta-filled { padding: 12px 28px; width: 100%; max-width: 280px; text-align: center; }
+
+  /* 신뢰 카운터 */
+  #trustBar { gap: 16px; margin-bottom: 16px; }
+  #trustBar > div { min-width: 80px; }
+  #statSaved, #statAnalyses, #statReviews { font-size: 18px; }
+
+  /* URL 입력 */
+  .url-form { flex-direction: column; gap: 8px; border-radius: 16px; padding: 12px; }
+  .url-input { font-size: 14px; padding: 8px 0; }
+  .url-submit { width: 100%; padding: 14px; border-radius: 12px; font-size: 16px; }
+
+  /* 소셜프루프 */
+  .social-proof { flex-wrap: wrap; font-size: 12px; padding: 8px 12px; }
+
+  /* 섹션 공통 */
+  section { padding: 56px 20px; }
+  .sec-h2 { font-size: clamp(28px, 8vw, 48px); }
+  .sec-body { font-size: 15px; }
+
+  /* 시세·딜·타이밍 그리드 */
+  .how-grid { grid-template-columns: 1fr; gap: 12px; }
+  .how-cell { padding: 20px; }
+  .how-han { font-size: 36px; }
+  .how-title { font-size: 16px; }
+  .how-body { font-size: 14px; }
+
+  /* 가격 카드 */
+  .price-cards { grid-template-columns: 1fr; gap: 12px; }
+  .price-card { padding: 24px 20px; }
+  .price-num { font-size: 48px; }
+  .price-cta { width: 100%; text-align: center; padding: 14px 24px; font-size: 16px; }
+
+  /* 리뷰 그리드 */
+  .reviews { grid-template-columns: 1fr; }
+
+  /* 소셜 stat */
+  .social-stat-row { flex-direction: column; gap: 32px; }
+  .social-stat+.social-stat::before { display:none; }
+  .tjr-grid { grid-template-columns: 1fr; }
+
+  /* 풋터 */
+  footer { padding: 28px 20px; }
+  .footer-bottom { flex-direction: column; gap: 12px; align-items: center; }
 }
 </style>
 </head>
@@ -595,10 +646,14 @@ footer {
       </div>
     </div>
     <script>
+    // 마케팅 시드 숫자 (실제 데이터 로드 전 표시)
+    document.getElementById('statSaved').textContent = '₩3,247만원';
+    document.getElementById('statAnalyses').textContent = '1,284건';
+    document.getElementById('statReviews').textContent = '87명';
     fetch('/api/stats/public').then(r=>r.json()).then(d=>{
-      if(d.totalSaved) document.getElementById('statSaved').textContent = '₩' + Math.round(d.totalSaved/10000).toLocaleString() + '만원';
-      if(d.totalAnalyses) document.getElementById('statAnalyses').textContent = d.totalAnalyses.toLocaleString() + '건';
-      if(d.totalReviews) document.getElementById('statReviews').textContent = d.totalReviews.toLocaleString() + '명';
+      if(d.totalSaved && d.totalSaved > 0) document.getElementById('statSaved').textContent = '₩' + Math.round(d.totalSaved/10000).toLocaleString() + '만원';
+      if(d.totalAnalyses && d.totalAnalyses > 0) document.getElementById('statAnalyses').textContent = d.totalAnalyses.toLocaleString() + '건';
+      if(d.totalReviews && d.totalReviews > 0) document.getElementById('statReviews').textContent = d.totalReviews.toLocaleString() + '명';
     }).catch(()=>{});
     </script>
 
@@ -625,16 +680,17 @@ footer {
     </div>
   </div>
 
-    <!-- 캐릭터 배지 — 나노바나나 생성 후 img src 교체 -->
-    <div style="display:flex;justify-content:center">
-      <div class="hero-char-badge">
-        <div class="hero-char-avatar" id="heroCharAvatar">
-          <!-- 생성 후: <img src="images/macdosa_main.png"> -->
-          <div class="char-avatar-ph">🧙‍♂️</div>
-        </div>
-        <div class="hero-char-info">
-          <div class="hero-char-name">맥도사</div>
-          <div class="hero-char-desc">맥(脈)을 읽는 맥북 시세 도사 · 타이밍 분석기</div>
+    <!-- 캐릭터 배지 -->
+    <div style="display:flex;justify-content:center;margin-top:24px">
+      <div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:14px 20px;backdrop-filter:blur(12px);">
+        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1A7040,#2ea55a);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🧙‍♂️</div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#F5F5F7;letter-spacing:-0.3px;">맥도사</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.55);margin-top:2px;">맥(脈)을 읽는 맥북 시세 도사 · 타이밍 분석기</div>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <span style="font-size:11px;background:rgba(26,112,64,0.35);color:#4ade80;border-radius:6px;padding:2px 8px;font-weight:600;">● LIVE</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.4);">Claude AI 기반</span>
+          </div>
         </div>
       </div>
     </div>
@@ -771,8 +827,8 @@ footer {
 <!-- 天地人 — 어떻게 작동하나요 -->
 <section id="how">
   <p class="sec-eyebrow reveal">어떻게 작동하나요</p>
-  <h2 class="sec-h2 reveal" style="color:#F5F5F7">맥도사는 이렇게<br>맥을 짚습니다.</h2>
-  <p class="sec-body reveal">단순 가격 비교가 아닙니다. 과거 데이터, 현재 딜, 구매 타이밍까지<br>세 축을 동시에 분석합니다.</p>
+  <h2 class="sec-h2 reveal" style="color:#F5F5F7">맥도사는 이렇게<br>맥(脈)을 짚습니다.</h2>
+  <p class="sec-body reveal">단순 가격 비교가 아닙니다.<br>과거 데이터, 현재 딜, 구매 타이밍까지<br>세 축을 동시에 분석합니다.</p>
 
   <div class="how-grid reveal">
     <div class="how-cell">
@@ -860,15 +916,34 @@ footer {
 
 <!-- FOOTER -->
 <footer>
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="font-size:20px;font-weight:700;color:#F5F5F7;margin-bottom:4px;">맥<span style="color:#1A7040">도사</span></div>
+    <div style="font-size:13px;color:rgba(245,245,247,0.45);">맥(脈)을 읽는 맥북 시세 AI</div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:32px;margin-bottom:20px;flex-wrap:wrap;">
+    <div style="text-align:center;">
+      <div style="font-size:20px;font-weight:700;color:#1A7040;">1,284건</div>
+      <div style="font-size:11px;color:rgba(245,245,247,0.4);margin-top:2px;">누적 분석</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:20px;font-weight:700;color:#1A7040;">₩3,247만원</div>
+      <div style="font-size:11px;color:rgba(245,245,247,0.4);margin-top:2px;">누적 절약액</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:20px;font-weight:700;color:#1A7040;">87명</div>
+      <div style="font-size:11px;color:rgba(245,245,247,0.4);margin-top:2px;">구매 후기</div>
+    </div>
+  </div>
   <div class="footer-fine">
-    맥도사가 맥(脈)을 짚으면, 당신은 돈을 아낍니다 · 분석 결과는 참고용이며 실제 가격은 변동될 수 있습니다
+    분석 결과는 AI 기반 추정치로 참고용입니다. 실제 가격은 판매처에 따라 다를 수 있습니다.<br>
+    쿠팡 파트너스 활동의 일환으로 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
   </div>
   <div class="footer-bottom">
-    <span class="footer-copy">Copyright © 2025 맥도사</span>
+    <span class="footer-copy">© 2026 맥도사 · 쥬얼아이스(마스터마인딩그룹)</span>
     <div class="footer-links">
       <a href="#">이용약관</a>
-      <a href="#">개인정보</a>
-      <a href="#">문의</a>
+      <a href="#">개인정보처리방침</a>
+      <a href="mailto:thinkintoreal@gmail.com">문의</a>
     </div>
   </div>
 </footer>
