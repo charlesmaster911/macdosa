@@ -398,52 +398,53 @@ app.post('/api/analyze', async (req, res) => {
     // 네이버 쇼핑 API 실시간 가격 조회
     const modelQuery = extractMacModelQuery(productInfo.title);
     const naverItems = await searchNaverShopping(modelQuery);
+
+    // 고객 가격 vs 네이버 최저가 비교
+    const customerPrice = productInfo.price;
+    const naverLowest = naverItems && naverItems.length > 0
+      ? Math.min(...naverItems.map(i => parseInt(i.lprice)).filter(p => p > 0))
+      : null;
+    const isAlreadyLowest = customerPrice && naverLowest && customerPrice <= naverLowest;
+
     const naverPriceBlock = (() => {
-      if (!naverItems || naverItems.length === 0) return '';
+      if (!naverItems || naverItems.length === 0) return '네이버 API 데이터 없음 (학습 데이터로 추정)';
       const lines = naverItems.slice(0, 8).map(item => {
         const title = item.title.replace(/<[^>]+>/g, '');
         return `  - ${item.mallName} | ${parseInt(item.lprice).toLocaleString()}원 | ${title} | ${item.link}`;
       });
-      return `━━━ 네이버 쇼핑 실시간 최저가 (API 직접 조회) ━━━\n검색어: "${modelQuery}"\n${lines.join('\n')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+      return `━━━ 네이버 쇼핑 실시간 최저가 (API 직접 조회) ━━━
+검색어: "${modelQuery}"
+${lines.join('\n')}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+고객 입력 가격: ${customerPrice ? customerPrice.toLocaleString()+'원' : '미확인'}
+네이버 최저가: ${naverLowest ? naverLowest.toLocaleString()+'원' : '미확인'}
+가격 비교 결과: ${isAlreadyLowest ? '✅ 이미 최저가 (고객이 잘 찾음)' : naverLowest && customerPrice ? `⚡ ${(customerPrice - naverLowest).toLocaleString()}원 더 절약 가능` : '비교 불가'}`;
     })();
 
     const today_str = new Date().toISOString().slice(0,10);
-    const prompt = `맥북 최저가 구매 분석 태스크입니다. 아래 실시간 가격 데이터를 기반으로 최저 구매 경로를 JSON으로 반환하세요.
+    const prompt = `맥북 최저가 구매 분석입니다. 고객이 준 링크의 제품을 네이버 쇼핑 실시간 데이터와 비교해 최적 구매 경로를 JSON으로 반환하세요.
 
 오늘 날짜: ${today_str}
 분석 URL: ${url}
 
-━━━ 스크랩된 상품 정보 ━━━
-제목: ${productInfo.title}
-현재 페이지 가격: ${productInfo.price ? productInfo.price.toLocaleString() + '원' : '미추출'}
-설명: ${productInfo.description}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━ 고객 상품 정보 ━━━
+제품명: ${productInfo.title}
+고객 현재 가격: ${customerPrice ? customerPrice.toLocaleString() + '원' : '미확인'}
+━━━━━━━━━━━━━━━━━━━
 
 ${naverPriceBlock}
 
 ${brainIntel || ''}
-
 ${learnedIntel || ''}
+[최근 딜 (30건)] ${recentDeals || '없음'}
 
-[최근 실제 딜 원본 (최근 30건)]
-${recentDeals || '아직 없음'}
-
-━━━ 필수 규칙 ━━━
-1. 네이버 쇼핑 실시간 데이터가 있으면 그 가격을 우선 사용. 없으면 학습 데이터로 추정(saveAmount에 "(추정)" 표시).
-2. paths의 url 필드: 네이버 API 실제 링크 우선. 없으면 null.
-3. currentPrice: 네이버 최저가 또는 스크랩 가격 중 낮은 값. 둘 다 없으면 학습 데이터로 추정.
-4. paths 배열은 반드시 최소 3개 이상. 빈 배열 [] 절대 금지.
-5. 응답은 JSON 코드블록만. 설명 텍스트 금지.
-
-[분석 수행]
-1. 제목에서 모델명(칩·메모리·스토리지) 확인. 모호하면 가장 유사한 모델로 추정.
-2. currentPrice: 스크랩 가격 있으면 그 값, 없으면 학습 데이터 기반 한국 시세 추정
-3. paths (최소 3개, 각 채널별 최저가 추정):
-   - 쿠팡 로켓배송 최저가 추정
-   - 롯데하이마트/삼성디지털플라자 카드 즉시할인 적용가
-   - 애플 교육할인 또는 리퍼비시 추정가
-   - 맥뮤지엄 중고가 추정 (신품의 70~80%)
-4. 타이밍: M4 출시 2024년 10월 기준 → 현재까지 개월수 계산
+━━━ 분석 로직 ━━━
+1. 고객 가격 vs 네이버 최저가 비교:
+   - 이미 최저가 → verdict.alreadyLowest=true, "잘 찾으셨어요! 현재 최저가입니다" 멘트
+   - 더 싼 곳 있음 → 절약 경로 제시, saveAmount = 고객가 - 네이버최저가
+2. paths: 네이버 API 실제 데이터 우선. url 필드에 실제 링크 반드시 포함.
+3. 데이터 없는 경로는 학습 데이터 추정 (condition에 "추정" 명시).
+4. paths 최소 3개. 응답은 JSON만.
 
 ━━━ JSON 형식으로만 응답 (json 코드블록 포함 가능, 다른 텍스트 금지) ━━━
 
@@ -471,8 +472,9 @@ ${recentDeals || '아직 없음'}
   },
   "verdict": {
     "buy": true또는false,
-    "title": "최종 한 줄 결론",
-    "desc": "이 경로로 사면 얼마 절약, 또는 왜 기다려야 하는지 2문장"
+    "alreadyLowest": true또는false,
+    "title": "최종 한 줄 결론 (이미 최저가면 '잘 찾으셨어요! 현재 최저가입니다 🎉')",
+    "desc": "이미 최저가면 칭찬 멘트. 아니면 절약 경로 안내 2문장."
   },
   "paths": [
     {
