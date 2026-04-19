@@ -536,9 +536,9 @@ main { padding-top: 44px; }
         </div>
       </div>
 
-      <!-- 2,3위 경로 — 공개 -->
+      <!-- 2,3위 경로 — 공개 (블러 없음) -->
       <div id="lockedPaths">
-        <div class="blur-content">
+        <div class="paths-public-content">
           <div class="path-item">
             <div class="path-rank rank-2">2</div>
             <div class="path-info">
@@ -1034,7 +1034,7 @@ function buildDealTags(p) {
 }
 
 function renderLockedPaths(paths) {
-  const container = $('lockedPaths')?.querySelector('.blur-content');
+  const container = $('lockedPaths')?.querySelector('.paths-public-content');
   if (!container || !paths.length) return;
   const ranks = [2, 3, 4];
   const rankColors = ['#FFD60A', '#FF9F0A', '#8E8E93'];

@@ -61,6 +61,49 @@ app.use((req, res, next) => {
   next();
 });
 
+// URL 스크랩 — 상품 제목/가격/설명 추출 (Claude에 컨텍스트 제공용)
+async function scrapeProductInfo(url) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+      signal: AbortSignal.timeout(10000)
+    });
+    const html = await res.text();
+
+    const get = (pattern) => html.match(pattern)?.[1]?.trim() || null;
+
+    // og 태그 / 타이틀 / JSON-LD 가격 추출
+    const title = get(/property="og:title"\s+content="([^"]+)"/)
+      || get(/<title>([^<]+)<\/title>/);
+    const description = get(/property="og:description"\s+content="([^"]+)"/)
+      || get(/name="description"\s+content="([^"]+)"/);
+
+    // JSON-LD 구조화 데이터에서 가격 추출
+    const jsonLdMatch = html.match(/<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/);
+    let structuredPrice = null;
+    if (jsonLdMatch) {
+      try {
+        const ld = JSON.parse(jsonLdMatch[1]);
+        structuredPrice = ld?.offers?.price || ld?.price || null;
+      } catch {}
+    }
+
+    // 페이지 내 숫자 가격 패턴 (쿠팡/네이버 등)
+    const pricePattern = html.match(/["']price["']\s*:\s*["']?(\d{5,8})["']?/)
+      || html.match(/(\d{1,3}(?:,\d{3})+)원/);
+    const rawPrice = structuredPrice || pricePattern?.[1]?.replace(/,/g, '') || null;
+
+    return {
+      title: title?.slice(0, 200) || '제목 없음',
+      price: rawPrice ? parseInt(rawPrice) : null,
+      description: description?.slice(0, 300) || '',
+      url
+    };
+  } catch (e) {
+    return { title: '스크랩 실패', price: null, description: '', url };
+  }
+}
+
 // Claude 호출 함수 — API (배포) / CLI (로컬 개발)
 function callClaudeCLI(prompt) {
   return new Promise((resolve, reject) => {
@@ -228,7 +271,8 @@ app.post('/api/analyze', async (req, res) => {
   }
 
   try {
-    // 쿠팡 URL → 상품ID 추출 (직접 크롤링 대신 웹 검색으로 우회)
+    // URL 스크랩 — 상품 제목/가격 추출해서 Claude 컨텍스트 주입
+    const productInfo = await scrapeProductInfo(url);
     const coupangId = url.match(/coupang\.com\/vp\/products\/(\d+)/)?.[1];
 
     const deals = db.deals || [];
@@ -283,11 +327,17 @@ app.post('/api/analyze', async (req, res) => {
     })();
 
     const today_str = new Date().toISOString().slice(0,10);
-    const prompt = `맥북 최저가 구매 분석 태스크입니다. 아래 URL의 맥북 제품을 분석해서 가장 싸게 살 수 있는 방법을 찾아주세요.
-목표: 신품·중고·카드할인·원데이딜 등 모든 채널을 검색해서 최저 구매 경로를 JSON으로 반환.
+    const prompt = `맥북 최저가 구매 분석 태스크입니다. 아래 상품 정보를 분석해서 가장 싸게 살 수 있는 방법을 찾아주세요.
+목표: 신품·중고·카드할인·원데이딜 등 모든 채널의 가격을 추정해서 최저 구매 경로를 JSON으로 반환.
 
 오늘 날짜: ${today_str}
 분석 URL: ${url}
+
+━━━ 스크랩된 상품 정보 (실제 페이지에서 추출) ━━━
+제목: ${productInfo.title}
+현재 페이지 가격: ${productInfo.price ? productInfo.price.toLocaleString() + '원' : '가격 미추출 (제목으로 모델 파악 후 시세 추정)'}
+설명: ${productInfo.description}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${brainIntel || ''}
 
@@ -296,28 +346,23 @@ ${learnedIntel || ''}
 [최근 실제 딜 원본 (최근 30건)]
 ${recentDeals || '아직 없음'}
 
-━━━ 반드시 아래 순서대로 웹 검색을 실행하세요 (챔피언 전략 우선) ━━━
+━━━ 위 스크랩 정보 + 학습된 브레인 데이터를 바탕으로 아래를 추정 분석하세요 ━━━
 
-[챔피언 검색 경로 — 최우선 실행]
-${championSearchHints.map((h, i) => `${i+1}. ${h}`).join('\n')}
+[신품 채널 — 학습 데이터 기반 추정]
+1. 위 제목에서 정확한 모델명(칩·메모리·스토리지) 파악
+2. 해당 모델의 쿠팡/네이버쇼핑 평균 최저가 추정 (학습 데이터 활용)
+3. 애플 교육할인 / 리퍼비시 할인가 추정
+4. ${coupangId ? `쿠팡 상품 ${coupangId} — 현재 페이지 가격 기준으로 분석` : ''}
 
-[신품 채널]
-${championSearchHints.length + 1}. ${coupangId
-  ? `"쿠팡 상품번호 ${coupangId}" 웹 검색 → 현재 판매가 확인`
-  : '분석 URL 제품명 추출 → 네이버쇼핑 최저가 검색'
-}
-${championSearchHints.length + 2}. "네이버쇼핑 맥북 최저가 ${today_str}" 검색
-${championSearchHints.length + 3}. "애플코리아 교육할인 리퍼스토어 맥북" 검색
-
-[중고 채널 — 절대 생략 금지]
-${championSearchHints.length + 4}. "맥뮤지엄 맥북프로" 검색 (macmuseum.kr — 한국 최대 중고맥 전문점)
-${championSearchHints.length + 5}. "당근마켓 번개장터 맥북프로 최근 거래가" 검색
-${championSearchHints.length + 6}. "애플 공인 리퍼비시 맥북" 검색 (apple.com/kr/shop/refurbished)
+[중고 채널 — 시세 추정]
+5. 맥뮤지엄(macmuseum.kr) 중고가 추정 (신품 대비 약 70~80%)
+6. 당근마켓/번개장터 거래 시세 추정
+7. 애플 공인 리퍼비시 할인가 추정
 
 [타이밍 신호]
-- "맥북 M5 출시일 루머 ${today_str}" 검색 → 신모델까지 얼마나 남았는지
-- 현재 모델 출시 후 몇 개월 경과 확인
-- 현재 시즌 파악 (블랙프라이데이/개학/연말)
+- 현재 모델 출시 시점 파악 → 몇 개월 경과인지
+- 다음 모델(M5 등) 출시 예상 시점
+- 현재 시즌 파악 (블랙프라이데이/개학/연말/일반)
 
 ━━━ 중요: 정보가 불완전해도 반드시 아래 JSON 형식으로만 응답. 모르는 값은 null. 텍스트 설명 절대 금지 ━━━
 
