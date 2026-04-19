@@ -1118,10 +1118,12 @@ function unlockPaths() {
   document.querySelectorAll('.card-disc-locked').forEach(el => { el.style.filter = 'none'; });
   const cardOverlay = document.getElementById('cardOverlay');
   if (cardOverlay) cardOverlay.style.display = 'none';
-  // 1위 구매링크 블러 해제 + 실제 링크 연결
+  // 1위 구매링크 블러 해제 + 실제 링크 연결 (paths[0].url 우선, 없으면 원래 URL)
   const buyBlur = $('buyLinkBlur');
-  if (buyBlur && urlParam) {
-    buyBlur.innerHTML = `<a href="${urlParam}" target="_blank" rel="noopener"
+  const paths = window._pathsData || [];
+  const bestUrl = (paths[0] && paths[0].url) ? paths[0].url : urlParam;
+  if (buyBlur && bestUrl) {
+    buyBlur.innerHTML = `<a href="${bestUrl}" target="_blank" rel="noopener"
       style="display:block;text-align:center;background:#1A7040;color:#fff;border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-decoration:none;">
       최저가로 바로 구매하기 →
     </a>`;
