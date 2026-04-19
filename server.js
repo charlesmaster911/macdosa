@@ -320,10 +320,14 @@ app.post('/api/analyze', async (req, res) => {
   }
 
   try {
-    // 북마클릿에서 직접 넘겨준 데이터 우선 사용, 없으면 서버 스크랩 시도
+    // URL 여부 판단 — URL이 아닌 텍스트 스펙 입력 처리
+    const isUrl = /^https?:\/\//i.test(url);
     let productInfo;
     if (scraped_title) {
       productInfo = { title: scraped_title, price: scraped_price ? parseInt(scraped_price) : null, description: '', url };
+    } else if (!isUrl) {
+      // 텍스트 스펙 직접 입력 (예: "맥북 m4 32gb 14")
+      productInfo = { title: url, price: null, description: '', url: null };
     } else {
       productInfo = await scrapeProductInfo(url);
     }
@@ -425,9 +429,9 @@ ${learnedIntel || ''}
 ${recentDeals || '아직 없음'}
 
 ━━━ 필수 규칙 ━━━
-1. 네이버 쇼핑 실시간 데이터가 있으면 반드시 그 가격을 우선 사용해라. AI 추정 금지.
-2. paths의 url 필드: 네이버 API에서 받은 실제 링크(item.link)를 넣어라. 없으면 null.
-3. currentPrice: 네이버 최저가 또는 스크랩 가격 중 낮은 값.
+1. 네이버 쇼핑 실시간 데이터가 있으면 그 가격을 우선 사용. 없으면 학습 데이터로 추정(saveAmount에 "(추정)" 표시).
+2. paths의 url 필드: 네이버 API 실제 링크 우선. 없으면 null.
+3. currentPrice: 네이버 최저가 또는 스크랩 가격 중 낮은 값. 둘 다 없으면 학습 데이터로 추정.
 4. paths 배열은 반드시 최소 3개 이상. 빈 배열 [] 절대 금지.
 5. 응답은 JSON 코드블록만. 설명 텍스트 금지.
 
