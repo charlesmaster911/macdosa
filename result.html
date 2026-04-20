@@ -1572,7 +1572,7 @@ loadReviews();
 <!-- FAB 그룹 -->
 <div class="fab-group">
   <div class="fab-wrap">
-    <span class="fab-tooltip">카카오톡으로 공유하기</span>
+    <span class="fab-tooltip">공유하면 분석 <strong>+1회</strong> 🎁</span>
     <button class="fab-btn fab-kakao" onclick="shareKakao()" title="카카오톡 공유">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="#000"><path d="M12 3C6.48 3 2 6.73 2 11.3c0 2.87 1.87 5.4 4.7 6.84l-.96 3.55 4.1-2.7c.7.1 1.43.16 2.16.16 5.52 0 10-3.73 10-8.35S17.52 3 12 3z"/></svg>
     </button>
@@ -1606,15 +1606,24 @@ loadReviews();
 
 <script>
 // 카카오 공유
-function shareKakao() {
-  const shareText = $('saveAmount')?.textContent || '맥북 최저가 분석';
-  const shareUrl = location.href;
+async function shareKakao() {
+  const model = $('modelName')?.textContent || '애플 제품';
+  const save  = $('saveAmount')?.textContent || '';
+  const shareText = `${model} 최저가 찾았어요 🍎${save ? ' ' + save + ' 절약 가능!' : ''} — 맥도사 무료 분석`;
+  const shareUrl = location.origin;
   if (navigator.share) {
     navigator.share({ title: '맥도사 분석 결과', text: shareText, url: shareUrl });
-    return;
+  } else {
+    navigator.clipboard?.writeText(shareUrl + '\n' + shareText)
+      .then(() => showToast('링크 복사됨! 카톡에 붙여넣기 하세요 📋'))
+      .catch(() => showToast('URL: ' + shareUrl));
   }
-  // fallback: 클립보드 복사
-  navigator.clipboard.writeText(shareUrl).then(() => showToast('링크가 복사됐습니다!')).catch(() => showToast('URL: ' + shareUrl));
+  // 보너스 적립
+  try {
+    const res = await fetch('/api/share-bonus', { method: 'POST' });
+    const data = await res.json();
+    if (data.bonusGranted > 0) setTimeout(() => showToast('공유 감사해요! 분석 +1회 추가됐습니다 🎁'), 800);
+  } catch(e) {}
   return;
   // 아래는 카카오 앱키 발급 후 활성화
   if (!window.Kakao) { alert('카카오 SDK 로드 중입니다.'); return; }

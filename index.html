@@ -1026,17 +1026,31 @@ async function joinBeta() {
 document.getElementById('betaEmailInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') joinBeta(); });
 
 /* ── 카톡 공유 ── */
-function shareKakao() {
+async function shareKakao() {
   const url = location.origin;
   const text = '애플 제품 최저가, AI가 바로 찾아줘요 🍎 맥도사 베타 무료 오픈 중!';
-  const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/easylink?app_key=&lang=kr&url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
   if (navigator.share) {
     navigator.share({ title: '맥도사', text, url });
   } else {
-    window.open(`https://sharer.kakao.com/talk/friends/picker/link?app_key=KAKAO_APP_KEY&validation_action=default&validation_params={"link_ver":"4.0","template_id":0}`, '_blank', 'width=400,height=600');
-    navigator.clipboard?.writeText(url + ' — ' + text).then(() => alert('링크가 복사됐습니다! 카톡에 붙여넣기 하세요 📋'));
+    navigator.clipboard?.writeText(url + '\n' + text)
+      .then(() => showShareToast('링크 복사됨! 카톡에 붙여넣기 하세요 📋'))
+      .catch(() => showShareToast('링크: ' + url));
   }
   track('kakao_share', { page: 'landing' });
+  // 보너스 적립
+  try {
+    const res = await fetch('/api/share-bonus', { method: 'POST' });
+    const data = await res.json();
+    if (data.bonusGranted > 0) showShareToast('공유 감사해요! 분석 +1회 추가됐습니다 🎁');
+  } catch(e) {}
+}
+
+function showShareToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1D1D1F;color:#fff;padding:12px 24px;border-radius:980px;font-size:14px;z-index:99999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4)';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
 
 /* ── 모달 ── */

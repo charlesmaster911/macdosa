@@ -1196,6 +1196,24 @@ app.post('/api/feedback', (req, res) => {
   res.json({ success: true, bonusGranted, message: bonusGranted > 0 ? `감사합니다! 오늘 ${bonusGranted}회 추가 분석권이 생겼습니다 🎁` : '소중한 의견 감사합니다!' });
 });
 
+// POST /api/share-bonus — 카톡 공유 시 +1회 보너스 (하루 1회)
+app.post('/api/share-bonus', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const db = readDB();
+  if (!db.bonuses) db.bonuses = [];
+  if (!db.shares) db.shares = [];
+
+  const alreadySharedToday = db.shares.some(s => s.ip === ip && s.date === today());
+  if (alreadySharedToday) {
+    return res.json({ success: true, bonusGranted: 0, message: '오늘은 이미 공유 보너스를 받으셨어요!' });
+  }
+
+  db.shares.push({ ip, date: today(), createdAt: new Date().toISOString() });
+  db.bonuses.push({ ip, date: today(), uses: 1, source: 'kakao-share', createdAt: new Date().toISOString() });
+  writeDB(db);
+  res.json({ success: true, bonusGranted: 1, message: '카톡 공유 감사해요! 분석 +1회 추가됐습니다 🎁' });
+});
+
 // GET /api/bonus — 현재 IP 보너스 잔여 횟수
 app.get('/api/bonus', (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
