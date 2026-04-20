@@ -676,8 +676,8 @@ main { padding-top: 44px; }
       <div class="blur-section">
         <div class="blur-content">
           <div class="vat-input-row">
-            <input type="text" placeholder="사업자 등록번호 입력 (예: 123-45-67890)" id="bizNum">
-            <button class="btn-sage" style="padding:10px 18px;font-size:13px;">계산</button>
+            <input type="text" placeholder="사업자 등록번호 입력 (예: 123-45-67890)" id="bizNum" oninput="calcBizVat()">
+            <button class="btn-sage" style="padding:10px 18px;font-size:13px;" onclick="calcBizVat()">계산</button>
           </div>
           <div class="vat-body">
             <div class="vat-row"><span class="label">최적 구매가</span><span class="value" id="vatRow1">—</span></div>
@@ -963,6 +963,7 @@ function initResult(data, serverTier) {
   // 가격 브레이크다운 (원가 → 최적가 → 절약)
   const origP = data.currentPrice;
   const bestP = data.paths?.[0]?.finalPrice || data.paths?.[0]?.price;
+  window._bestPrice = bestP || 0;
   if (origP && bestP) {
     const savedAmt = origP - bestP;
     $('origPriceEl').textContent = `${origP.toLocaleString()}원`;
@@ -985,7 +986,8 @@ function initResult(data, serverTier) {
     $('vatRow1') && ($('vatRow1').textContent = `${bestP.toLocaleString()}원`);
     $('vatRow2') && ($('vatRow2').textContent = `${(bestP - vat).toLocaleString()}원`);
     $('vatRow3') && ($('vatRow3').textContent = `${vat.toLocaleString()}원`);
-    $('vatRow4') && ($('vatRow4').textContent = `${afterVat.toLocaleString()}원 (${Math.round(vat/10000)}만원 환급)`);
+    const vatLabel = vat >= 10000 ? `${Math.floor(vat/10000)}만${vat%10000 >= 1000 ? Math.floor(vat%10000/1000)+'천' : ''}원 환급` : `${Math.round(vat/1000)*1000 || vat}원 환급`;
+    $('vatRow4') && ($('vatRow4').textContent = `${afterVat.toLocaleString()}원 (${vatLabel})`);
   }
 
 
@@ -1291,6 +1293,26 @@ const MODAL_CONFIG = {
   }
 };
 
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e); }
+
+function calcBizVat() {
+  const bizNum = ($('bizNum')?.value || '').replace(/[^0-9]/g, '');
+  const price = window._bestPrice || 0;
+  if (!price) return;
+  if (bizNum.length > 0 && bizNum.length < 10) {
+    $('vatRow4') && ($('vatRow4').style.color = '#FF3B30');
+    return;
+  }
+  $('vatRow4') && ($('vatRow4').style.color = '');
+  const vat = Math.round(price / 11);
+  const afterVat = price - vat;
+  $('vatRow1') && ($('vatRow1').textContent = `${price.toLocaleString()}원`);
+  $('vatRow2') && ($('vatRow2').textContent = `${afterVat.toLocaleString()}원`);
+  $('vatRow3') && ($('vatRow3').textContent = `${vat.toLocaleString()}원`);
+  const vatLabel = vat >= 10000 ? `${Math.floor(vat/10000)}만${vat%10000>=1000?Math.floor(vat%10000/1000)+'천':''}원 환급` : `${Math.round(vat/1000)*1000||vat}원 환급`;
+  $('vatRow4') && ($('vatRow4').textContent = `${afterVat.toLocaleString()}원 (${vatLabel})`);
+}
+
 function openModal(type) {
   const cfg = MODAL_CONFIG[type];
   const btn = $('modalBtn');
@@ -1339,8 +1361,9 @@ async function handlePayment() {
   const email = $('modalEmail').value;
   const payType = $('modalBtn').dataset.payType;
 
-  if (!email || !email.includes('@')) {
+  if (!isValidEmail(email)) {
     $('modalEmail').style.borderColor = '#FF3B30';
+    $('modalEmail').placeholder = '올바른 이메일 형식으로 입력해주세요';
     return;
   }
 

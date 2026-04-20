@@ -1006,10 +1006,10 @@ function scrollToInput() {
 async function joinBeta() {
   const email = document.getElementById('betaEmailInput').value.trim();
   const msg = document.getElementById('betaMsg');
-  if (!email || !email.includes('@')) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
     document.getElementById('betaEmailInput').style.borderColor = '#FF3B30';
     msg.style.color = '#FF3B30';
-    msg.textContent = '올바른 이메일을 입력해주세요';
+    msg.textContent = '올바른 이메일 형식을 입력해주세요 (예: name@gmail.com)';
     return;
   }
   msg.style.color = 'rgba(255,255,255,0.5)';
@@ -1251,7 +1251,7 @@ function updateAnalysisBtn() {
   const email = document.getElementById('heroEmail')?.value.trim() || '';
   const btn = document.getElementById('analysisBtnHero');
   if (!btn) return;
-  const valid = email.includes('@');
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
   btn.style.background = valid ? '#1A7040' : '#2C2C2E';
   btn.style.color = valid ? '#fff' : 'rgba(255,255,255,0.3)';
   btn.style.cursor = valid ? 'pointer' : 'default';
