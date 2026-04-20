@@ -1004,18 +1004,19 @@ app.post('/api/beta-join', async (req, res) => {
 
   const db = readDB();
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const token = issueToken(email);
   const existing = db.purchases.find(p => p.email === email && p.status === 'beta');
-  if (!existing) {
-    db.purchases.push({
-      id: `beta-${Date.now()}`, email, payType: 'BETA', amount: 0,
-      token, tier: 'one-time', status: 'beta',
-      source: 'beta-join', createdAt: new Date().toISOString()
-    });
-    upsertUser(db, { email, ip, source: 'beta-join' });
-    writeDB(db);
+  if (existing) {
+    return res.json({ success: true, token: existing.token, alreadyRegistered: true });
   }
-  res.json({ success: true, token });
+  const token = issueToken(email);
+  db.purchases.push({
+    id: `beta-${Date.now()}`, email, payType: 'BETA', amount: 0,
+    token, tier: 'one-time', status: 'beta',
+    source: 'beta-join', createdAt: new Date().toISOString()
+  });
+  upsertUser(db, { email, ip, source: 'beta-join' });
+  writeDB(db);
+  res.json({ success: true, token, alreadyRegistered: false });
 });
 
 // POST /api/payment/initiate — 토스페이먼츠 결제 시작

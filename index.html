@@ -249,8 +249,8 @@ nav {
 }
 .url-input {
   flex: 1; border: none; outline: none;
-  padding: 16px 20px;
-  font-size: 17px; font-family: var(--font);
+  padding: 20px 24px;
+  font-size: 19px; font-family: var(--font);
   color: #F5F5F7; background: transparent;
 }
 .url-input::placeholder { color: rgba(245,245,247,0.35); }
@@ -681,8 +681,9 @@ footer {
         style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(245,245,247,0.7);
                font-size:13px;padding:7px 18px;border-radius:20px;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;"
         onmouseover="this.style.background='rgba(255,255,255,0.14)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
-        📷 <span id="screenshotBtnText">URL 대신 스크린샷으로 분석</span>
+        📷 <span id="screenshotBtnText">스크린샷 붙여넣기 (Cmd+V) 또는 파일 선택</span>
       </button>
+      <div style="font-size:11px;color:rgba(245,245,247,0.35);margin-top:4px;">맥: Cmd+Shift+4 → Cmd+V · 윈도우: Win+Shift+S → Ctrl+V</div>
       <div id="screenshotStatus" style="font-size:12px;color:rgba(245,245,247,0.5);margin-top:6px;display:none"></div>
     </div>
     <!-- 입력 가이드 -->
@@ -1195,10 +1196,26 @@ function showUrlWarning(msg) {
 }
 
 /* ── 스크린샷 업로드 → AI 텍스트 추출 → 분석 ── */
+// 홈페이지 전체 paste (Cmd+V) → 스크린샷 분석
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      handleScreenshotFile(item.getAsFile());
+      return;
+    }
+  }
+});
+
 async function handleScreenshot(input) {
   const file = input.files[0];
   if (!file) return;
+  handleScreenshotFile(file);
+}
 
+async function handleScreenshotFile(file) {
   const statusEl = document.getElementById('screenshotStatus');
   const btnText = document.getElementById('screenshotBtnText');
   statusEl.style.display = 'block';
@@ -1241,8 +1258,7 @@ async function handleScreenshot(input) {
     }, 800);
   } catch (e) {
     statusEl.textContent = '오류가 발생했습니다. URL을 직접 입력해주세요.';
-    btnText.textContent = 'URL 대신 스크린샷으로 분석';
-    input.value = '';
+    if (btnText) btnText.textContent = '스크린샷 붙여넣기 (Cmd+V) 또는 파일 선택';
   }
 }
 
@@ -1300,6 +1316,17 @@ async function startAnalysis() {
     });
     const data = await res.json();
     if (data.success) {
+      if (data.alreadyRegistered) {
+        const emailEl = document.getElementById('heroEmail');
+        if (emailEl) {
+          emailEl.style.borderColor = '#FF9500';
+          const hint = document.createElement('div');
+          hint.textContent = '이미 등록된 이메일입니다 — 계속 분석합니다';
+          hint.style.cssText = 'font-size:12px;color:#FF9500;text-align:center;margin-top:4px;';
+          emailEl.parentElement?.parentElement?.appendChild(hint);
+          setTimeout(() => hint.remove(), 3000);
+        }
+      }
       localStorage.setItem('macdosa_token', data.token);
       localStorage.setItem('macdosa_email', emailInline);
       track('beta_join_hero', { email_domain: emailInline.split('@')[1] });
@@ -1335,11 +1362,17 @@ async function submitEmailGate() {
     });
     const data = await res.json();
     if (data.success) {
+      if (data.alreadyRegistered) {
+        msg.style.color = '#FF9500';
+        msg.textContent = '이미 등록된 이메일입니다 — 계속 분석합니다';
+      }
       localStorage.setItem('macdosa_token', data.token);
       localStorage.setItem('macdosa_email', email);
       track('beta_join_hero', { email_domain: email.split('@')[1] });
-      overlay.style.display = 'none';
-      window.location.href = `/result?url=${encodeURIComponent(overlay.dataset.url)}`;
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        window.location.href = `/result?url=${encodeURIComponent(overlay.dataset.url)}`;
+      }, data.alreadyRegistered ? 1200 : 0);
     }
   } catch(e) {
     // 네트워크 오류도 그냥 진행
