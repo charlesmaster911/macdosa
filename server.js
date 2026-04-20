@@ -713,9 +713,11 @@ ${lines.join('\n')}
       iphone: `※ iPhone 분석 필수 포함사항:
 - 자급제 최저가: 쿠팡/11번가/G마켓 가격 기준
 - SKT/KT/LGU+ 공시지원금 vs 선택약정 25% 중 유리한 쪽 명시
-- 자급제 vs 통신사 약정 24개월 총비용 비교 (요금제 포함)
+- ★★★ 자급제 vs 통신사 약정 24개월 총비용 반드시 수치로 비교:
+  예시: "자급제 70만원 + 5만원 요금제 24개월 = 총 190만원 vs SKT 공시 약정 24개월 총 195만원 → 자급제가 5만원 유리"
+  condition 필드에 월납부액 × 24 총비용 반드시 포함
 - 현대카드·삼성카드·KB카드 즉시할인 조건 반드시 paths에 포함
-- paths 1위: 자급제 최저가 (카드할인 적용), 2-3위: 통신사 공시지원금 추천 조합
+- paths 1위: 자급제 최저가 (카드할인 적용), 2위: 통신사 공시지원금 최적 조합, 3위: 선택약정 조합
 - ★★★ 예산 배려 필수: 분석 제품이 90만원 초과 시, paths 마지막에 반드시 포함:
   • iPhone SE 4세대 (2025 출시, 89만원~, A18칩, 6.1인치, 예산 절약 대안)
   • 중고 iPhone 15 (번개장터/중고나라 70~85만원대, 직전 세대)
@@ -761,6 +763,9 @@ ${recentDeals || '없음'}
 2. paths: 네이버 API 실제 데이터 우선. url 필드에 실제 링크 반드시 포함.
 3. 데이터 없는 경로는 추정 (condition에 "추정" 명시).
 4. paths 최소 3개. 응답은 JSON만.
+5. ★★★ 중고 가격 검증 필수: isUsed=true 경로는 반드시 신품 최저가보다 저렴해야 합니다.
+   - 중고 finalPrice >= 신품 최저가면 paths에서 제외하고 usedMarket.recommendation에 "중고 비추천 — 현재 중고가가 신품보다 비쌉니다. 신품 구매가 유리합니다" 명시
+   - 중고 추천 시 반드시 grade(A/B/C급 상태), 보증 여부, 신품 대비 절약액을 condition에 포함
 
 ━━━ JSON 형식으로만 응답 (json 코드블록 포함 가능, 다른 텍스트 금지) ━━━
 
@@ -882,6 +887,21 @@ ${recentDeals || '없음'}
       } else if (brainFallbackPaths.length > 0) {
         analysis.paths = brainFallbackPaths;
       }
+    }
+
+    // 중고 가격 역전 감지 — 중고가 >= 신품 최저가면 제거
+    if (analysis.paths) {
+      const newPaths = analysis.paths.filter(p => !p.isUsed);
+      const cheapestNew = newPaths.reduce((min, p) => Math.min(min, p.finalPrice || Infinity), Infinity);
+      analysis.paths = analysis.paths.filter(p => {
+        if (p.isUsed && p.finalPrice && p.finalPrice >= cheapestNew) {
+          if (analysis.usedMarket) {
+            analysis.usedMarket.recommendation = `중고 비추천 — 현재 중고가(${Math.round(p.finalPrice/10000)}만원)가 신품(${Math.round(cheapestNew/10000)}만원)보다 비쌉니다. 신품 구매가 유리합니다.`;
+          }
+          return false;
+        }
+        return true;
+      });
     }
 
     // paths finalPrice 보완 — 0이거나 없으면 네이버 데이터로 채움
