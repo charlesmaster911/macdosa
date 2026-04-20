@@ -959,7 +959,6 @@ function initResult(data, serverTier) {
 
   // 모델명 & 절약액
   if (data.model) $('modelName').textContent = data.model;
-  if (data.saveAmount) $('saveAmount').textContent = `지금 사면 ${Math.round(data.saveAmount / 10000)}만원 절약 가능`;
 
   // 가격 브레이크다운 (원가 → 최적가 → 절약)
   const origP = data.currentPrice;
@@ -970,6 +969,13 @@ function initResult(data, serverTier) {
     $('bestPriceEl').textContent = `${bestP.toLocaleString()}원`;
     $('saveBadgeEl').textContent = `↓ ${Math.round(savedAmt/10000)}만원 절약`;
     $('priceBreakdown').style.display = 'flex';
+    // 상단 절약 멘트 — 실제 계산값으로 덮어씀
+    const displaySave = savedAmt > 0 ? savedAmt : (data.saveAmount || 0);
+    if (displaySave > 0) {
+      $('saveAmount').textContent = `지금 사면 ${Math.round(displaySave / 10000)}만원 절약 가능`;
+    } else {
+      $('saveAmount').textContent = '최저가 분석 완료';
+    }
     // VAT 흐름 업데이트
     const vat = Math.round(bestP / 11);
     const afterVat = bestP - vat;
