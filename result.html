@@ -1104,7 +1104,7 @@ function renderUsedMarket(used, newPrice) {
   const modelQuery = encodeURIComponent((window._analysisModel || '맥북').replace(/[()]/g, '').trim());
   const channels = [
     { key: 'macmuseum',   label: '맥뮤지엄',          desc: '(전문점·보증)',   url: `https://www.macmuseum.co.kr/search?q=${modelQuery}` },
-    { key: 'daangn',      label: '당근마켓',            desc: '(개인 직거래)',   url: `https://www.daangn.com/search/${modelQuery}` },
+    { key: 'daangn',      label: '당근마켓',            desc: '(개인 직거래)',   url: `https://www.daangn.com/kr/buy-sell/?search=${modelQuery}` },
     { key: 'joongna',     label: '중고나라',             desc: '(개인 판매)',     url: `https://web.joongna.com/search/${modelQuery}` },
     { key: 'bungae',      label: '번개장터',             desc: '(개인 판매)',     url: `https://m.bunjang.co.kr/search/products?q=${modelQuery}` },
     { key: 'appleRefurb', label: '애플 공인 리퍼',       desc: '(애플 보증)',     url: 'https://www.apple.com/kr/shop/refurbished/mac' },
