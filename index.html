@@ -657,11 +657,22 @@ footer {
     }).catch(()=>{});
     </script>
 
-    <!-- URL 입력창 — 구글처럼 첫 화면에서 바로 -->
-    <div class="url-input-wrap" style="margin-bottom:10px">
-      <input class="url-input" type="text" id="heroInput"
-        placeholder="예: MacBook Air M3 / iPhone 16 Pro / iPad M4 · URL도 OK" />
-      <button class="url-submit" onclick="startAnalysis()">무료로 분석하기</button>
+    <!-- URL + 이메일 입력 폼 -->
+    <div style="max-width:600px;margin:0 auto 10px;display:flex;flex-direction:column;gap:8px">
+      <div class="url-input-wrap" style="margin-bottom:0">
+        <input class="url-input" type="text" id="heroInput"
+          placeholder="예: MacBook Air M3 / iPhone 16 Pro / iPad M4 · URL도 OK" />
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="email" id="heroEmail" placeholder="이메일 입력 후 분석 시작"
+          style="flex:1;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;font-size:15px;color:#fff;font-family:var(--font);outline:none;transition:border-color 0.2s"
+          onfocus="this.style.borderColor='rgba(255,255,255,0.35)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'"
+          oninput="updateAnalysisBtn()" onkeydown="if(event.key==='Enter') startAnalysis()" />
+        <button id="analysisBtnHero" class="url-submit" onclick="startAnalysis()"
+          style="background:#2C2C2E;color:rgba(255,255,255,0.3);cursor:default;transition:background 0.2s,color 0.2s;white-space:nowrap">
+          무료로 분석하기
+        </button>
+      </div>
     </div>
     <!-- 스크린샷 업로드 -->
     <div style="text-align:center;margin-bottom:14px">
@@ -1236,26 +1247,65 @@ async function handleScreenshot(input) {
 }
 
 /* ── 분석 시작 → result 페이지로 이동 ── */
-function startAnalysis() {
+function updateAnalysisBtn() {
+  const email = document.getElementById('heroEmail')?.value.trim() || '';
+  const btn = document.getElementById('analysisBtnHero');
+  if (!btn) return;
+  const valid = email.includes('@');
+  btn.style.background = valid ? '#1A7040' : '#2C2C2E';
+  btn.style.color = valid ? '#fff' : 'rgba(255,255,255,0.3)';
+  btn.style.cursor = valid ? 'pointer' : 'default';
+}
+
+async function startAnalysis() {
   const url = document.getElementById('heroInput').value.trim();
+  const emailInline = document.getElementById('heroEmail')?.value.trim() || '';
+
+  // 이메일 미입력 → 이메일 필드 포커스
+  if (!emailInline || !emailInline.includes('@')) {
+    const emailEl = document.getElementById('heroEmail');
+    if (emailEl) {
+      emailEl.style.borderColor = '#FF3B30';
+      emailEl.placeholder = '← 이메일을 먼저 입력해주세요';
+      emailEl.focus();
+    }
+    return;
+  }
+  // URL 미입력 → URL 필드 포커스
   if (!url) {
     document.getElementById('heroInput').focus();
-    document.getElementById('heroInput').placeholder = '← URL을 먼저 붙여넣어 주세요';
+    document.getElementById('heroInput').placeholder = '← 검색할 제품명 또는 URL을 입력해주세요';
     return;
   }
   if (isSearchResultUrl(url)) {
     showUrlWarning('검색결과 페이지 말고, 상품 상세 페이지 URL을 넣어주세요 🙏');
-    document.getElementById('heroInput').focus();
     return;
   }
-  // 이미 베타 token 있으면 바로 분석
+
+  // token 이미 있으면 바로 분석
   if (localStorage.getItem('macdosa_token')) {
     track('analysis_started', { url });
     window.location.href = `/result?url=${encodeURIComponent(url)}`;
     return;
   }
-  // token 없으면 이메일 입력 모달 표시
-  showEmailGate(url);
+
+  // 베타 가입 후 분석
+  const btn = document.getElementById('analysisBtnHero');
+  if (btn) { btn.textContent = '분석 중...'; btn.style.cursor = 'default'; }
+  try {
+    const res = await fetch('/api/beta-join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailInline })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('macdosa_token', data.token);
+      localStorage.setItem('macdosa_email', emailInline);
+      track('beta_join_hero', { email_domain: emailInline.split('@')[1] });
+    }
+  } catch(e) {}
+  window.location.href = `/result?url=${encodeURIComponent(url)}`;
 }
 
 function showEmailGate(pendingUrl) {
