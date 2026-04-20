@@ -657,51 +657,39 @@ footer {
     }).catch(()=>{});
     </script>
 
-    <!-- URL + 이메일 입력 폼 -->
-    <div style="max-width:600px;margin:0 auto 10px;display:flex;flex-direction:column;gap:8px">
-      <div class="url-input-wrap" style="margin-bottom:0">
+    <!-- 입력 폼 -->
+    <div style="max-width:620px;margin:0 auto 32px;">
+
+      <!-- URL 입력 — 크고 선명하게 -->
+      <div class="url-input-wrap" style="width:100%;margin:0 0 10px 0;">
         <input class="url-input" type="text" id="heroInput"
-          placeholder="예: MacBook Air M3 / iPhone 16 Pro / iPad M4 · URL도 OK" />
+          placeholder="MacBook Air M3 · iPhone 16 Pro · URL도 OK" />
       </div>
-      <div style="display:flex;gap:8px">
-        <input type="email" id="heroEmail" placeholder="이메일 입력 후 분석 시작"
-          style="flex:1;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;font-size:15px;color:#fff;font-family:var(--font);outline:none;transition:border-color 0.2s"
+
+      <!-- 이메일 + CTA — URL보다 작게 -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <input type="email" id="heroEmail" placeholder="이메일로 결과 받기"
+          style="flex:1;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:11px 16px;font-size:14px;color:#fff;font-family:var(--font);outline:none;transition:border-color 0.2s;"
           onfocus="this.style.borderColor='rgba(255,255,255,0.35)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'"
           oninput="updateAnalysisBtn()" onkeydown="if(event.key==='Enter') startAnalysis()" />
         <button id="analysisBtnHero" class="url-submit" onclick="startAnalysis()"
-          style="background:#2C2C2E;color:rgba(255,255,255,0.3);cursor:default;transition:background 0.2s,color 0.2s;white-space:nowrap">
-          무료로 분석하기
+          style="background:#2C2C2E;color:rgba(255,255,255,0.3);cursor:default;transition:background 0.2s,color 0.2s;white-space:nowrap;font-size:14px;padding:11px 22px;">
+          무료 분석
         </button>
       </div>
+
+      <!-- 스크린샷 + 힌트 — 한 줄로 정리 -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
+        <input type="file" id="screenshotInput" accept="image/*" style="display:none" onchange="handleScreenshot(this)">
+        <button onclick="document.getElementById('screenshotInput').click()" id="screenshotBtn"
+          style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(245,245,247,0.55);font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.2s;"
+          onmouseover="this.style.background='rgba(255,255,255,0.13)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">
+          📷 <span id="screenshotBtnText">스크린샷 붙여넣기</span>
+        </button>
+        <span style="font-size:11px;color:rgba(245,245,247,0.25);">Mac: Cmd+Shift+4 → Cmd+V</span>
+        <div id="screenshotStatus" style="font-size:12px;color:rgba(245,245,247,0.5);display:none;"></div>
+      </div>
     </div>
-    <!-- 스크린샷 업로드 -->
-    <div style="text-align:center;margin-bottom:14px">
-      <input type="file" id="screenshotInput" accept="image/*" style="display:none" onchange="handleScreenshot(this)">
-      <button onclick="document.getElementById('screenshotInput').click()" id="screenshotBtn"
-        style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(245,245,247,0.7);
-               font-size:13px;padding:7px 18px;border-radius:20px;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;"
-        onmouseover="this.style.background='rgba(255,255,255,0.14)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
-        📷 <span id="screenshotBtnText">스크린샷 붙여넣기 (Cmd+V) 또는 파일 선택</span>
-      </button>
-      <div style="font-size:11px;color:rgba(245,245,247,0.35);margin-top:4px;">맥: Cmd+Shift+4 → Cmd+V · 윈도우: Win+Shift+S → Ctrl+V</div>
-      <div id="screenshotStatus" style="font-size:12px;color:rgba(245,245,247,0.5);margin-top:6px;display:none"></div>
-    </div>
-    <!-- 입력 가이드 -->
-    <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:18px">
-      <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
-        ✅ <span>쿠팡 · 네이버 상품 페이지</span>
-      </span>
-      <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
-        ✅ <span>다나와 · 애플 스토어</span>
-      </span>
-      <span style="font-size:12px;color:rgba(245,245,247,0.5);display:flex;align-items:center;gap:5px;">
-        ✅ <span>아이폰 · 아이패드</span>
-      </span>
-      <span style="font-size:12px;color:rgba(245,245,247,0.35);display:flex;align-items:center;gap:5px;">
-        ❌ <span>검색결과 페이지 ✗</span>
-      </span>
-    </div>
-    <p class="url-hint" style="margin-bottom:28px">맥도사는 Mac의 맥(脈)을 읽습니다. 30일 시세 흐름과 현재 딜을 3단계로 분석해 당신이 살 타이밍을 정확히 짚어드립니다.</p>
 
     <!-- 소셜 프루프 -->
     <div style="display:flex;justify-content:center;margin-bottom:52px">
@@ -713,7 +701,7 @@ footer {
           <div class="avatar">🧑‍💻</div>
           <div class="avatar" style="background:#2C2C2E;color:rgba(255,255,255,0.35);font-size:10px;font-weight:600">+</div>
         </div>
-        <span class="proof-txt">애플 제품 살 때 그냥 사지 마세요 — <strong>184명</strong>이 평균 18만원 아꼈습니다</span>
+        <span class="proof-txt">애플 살 때 그냥 사지 마세요 — <strong>184명</strong>이 평균 18만원 아꼈습니다</span>
       </div>
     </div>
   </div>
