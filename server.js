@@ -975,6 +975,27 @@ ${recentDeals || '없음'}
   }
 });
 
+// POST /api/beta-join — 베타 이메일 수집 & 무제한 토큰 발급
+app.post('/api/beta-join', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes('@')) return res.status(400).json({ error: '이메일 필요' });
+
+  const db = readDB();
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const token = issueToken(email);
+  const existing = db.purchases.find(p => p.email === email && p.status === 'beta');
+  if (!existing) {
+    db.purchases.push({
+      id: `beta-${Date.now()}`, email, payType: 'BETA', amount: 0,
+      token, tier: 'one-time', status: 'beta',
+      source: 'beta-join', createdAt: new Date().toISOString()
+    });
+    upsertUser(db, { email, ip, source: 'beta-join' });
+    writeDB(db);
+  }
+  res.json({ success: true, token });
+});
+
 // POST /api/payment/initiate — 토스페이먼츠 결제 시작
 app.post('/api/payment/initiate', async (req, res) => {
   const { email, payType, url: macUrl } = req.body;

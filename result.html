@@ -757,13 +757,13 @@ main { padding-top: 44px; }
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" id="modal">
     <button class="modal-close" onclick="closeModalDirect()">✕</button>
-    <h2 id="modalTitle">구매 경로 잠금 해제</h2>
-    <div class="modal-price" id="modalPrice">9,900원</div>
-    <div class="modal-desc" id="modalDesc">이 맥북에 대한 최적 구매 경로 1회 공개</div>
+    <h2 id="modalTitle">🎉 베타 무료 — 전체 공개</h2>
+    <div class="modal-price" id="modalPrice" style="color:#FFD60A">무료</div>
+    <div class="modal-desc" id="modalDesc">이메일만 남기면 구매 경로·카드 조합 전체를 바로 공개합니다</div>
     <ul class="modal-features" id="modalFeatures"></ul>
-    <input type="email" id="modalEmail" placeholder="이메일 입력 — 구매 경로 전송용">
-    <button class="btn-sage btn-modal" id="modalBtn" onclick="handlePayment()">결제하고 잠금 해제</button>
-    <div class="modal-note">🔒 토스페이먼츠 보안 결제 · 환불 정책 확인</div>
+    <input type="email" id="modalEmail" placeholder="이메일 입력 (베타 참여)">
+    <button class="btn-sage btn-modal" id="modalBtn" onclick="handlePayment()">무료로 전체 보기</button>
+    <div class="modal-note">정식 출시 전까지 완전 무료 · 스팸 없음</div>
   </div>
 </div>
 
@@ -1309,25 +1309,23 @@ async function handlePayment() {
   btn.disabled = true;
 
   try {
-    const res = await fetch('/api/payment/initiate', {
+    // 베타: /api/beta-join으로 바로 처리
+    const res = await fetch('/api/beta-join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, payType, url: urlParam })
+      body: JSON.stringify({ email })
     });
-
-    if (!res.ok) return betaUnlock(email, payType);
-
     const data = await res.json();
-    if (data.tossUrl) {
-      window.location.href = data.tossUrl;
-    } else if (data.betaAccess) {
-      // 토큰 저장 후 페이지 재로드 → 유료 tier로 재분석
+    if (data.success) {
       localStorage.setItem('macdosa_tier', 'paid');
       localStorage.setItem('macdosa_email', email);
       localStorage.setItem('macdosa_token', data.token);
-      showToast('✅ 전체 경로가 열렸습니다! 스크롤해서 확인하세요');
-      setTimeout(() => window.location.reload(), 3000);
+      track('beta_join_result', { email_domain: email.split('@')[1] });
+      showToast('✅ 베타 참여 완료! 전체 경로가 열립니다');
+      setTimeout(() => window.location.reload(), 1500);
+      return;
     }
+    betaUnlock(email, payType);
   } catch {
     betaUnlock(email, payType);
   }
