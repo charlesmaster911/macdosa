@@ -778,13 +778,15 @@ ${detectFlashSales(db.deals, productType) || ''}
 ${recentDeals || '없음'}
 
 ━━━ 분석 로직 ━━━
-1. 고객 가격 vs 네이버 최저가 비교:
-   - 이미 최저가 → verdict.alreadyLowest=true, "잘 찾으셨어요! 현재 최저가입니다" 멘트
-   - 더 싼 곳 있음 → 절약 경로 제시, saveAmount = 고객가 - 네이버최저가
-2. paths: 네이버 API 실제 데이터 우선. url 필드에 실제 링크 반드시 포함.
-3. 데이터 없는 경로는 추정 (condition에 "추정" 명시).
-4. paths 최소 3개. 응답은 JSON만.
-5. ★★★ 중고 가격 검증 필수: isUsed=true 경로는 반드시 신품 최저가보다 저렴해야 합니다.
+1. 고객 가격 vs 모든 paths finalPrice 비교:
+   - ★★★ alreadyLowest 조건: paths 중 finalPrice < 고객가격인 경로가 하나라도 있으면 반드시 alreadyLowest=false
+   - 모든 paths finalPrice >= 고객가격일 때만 alreadyLowest=true 가능
+   - 더 싼 곳 있음 → 절약 경로 제시, saveAmount = 고객가 - 가장 싼 finalPrice
+2. paths 정렬: 반드시 finalPrice 오름차순 (가장 싼 것이 rank:1)
+3. paths: 네이버 API 실제 데이터 우선. url 필드에 실제 링크 반드시 포함.
+4. 데이터 없는 경로는 추정 (condition에 "추정" 명시).
+5. paths 최소 3개. 응답은 JSON만.
+6. ★★★ 중고 가격 검증 필수: isUsed=true 경로는 반드시 신품 최저가보다 저렴해야 합니다.
    - 중고 finalPrice >= 신품 최저가면 paths에서 제외하고 usedMarket.recommendation에 "중고 비추천 — 현재 중고가가 신품보다 비쌉니다. 신품 구매가 유리합니다" 명시
    - 중고 추천 시 반드시 grade(A/B/C급 상태), 보증 여부, 신품 대비 절약액을 condition에 포함
 
@@ -936,6 +938,26 @@ ${recentDeals || '없음'}
           searchUrl: getStoreSearchUrl(p.store, analysis.model || url),
         };
       });
+
+      // ★ paths finalPrice 오름차순 정렬 (가장 싼 게 1위)
+      analysis.paths.sort((a, b) => (a.finalPrice || Infinity) - (b.finalPrice || Infinity));
+      analysis.paths.forEach((p, i) => { p.rank = i + 1; });
+
+      // ★ alreadyLowest 서버 검증 — AI 오판 방지
+      if (customerPrice && analysis.paths.length > 0) {
+        const cheapestFinal = analysis.paths[0].finalPrice;
+        if (cheapestFinal && cheapestFinal < customerPrice) {
+          // 더 싼 경로가 있으면 강제로 alreadyLowest=false + verdict 수정
+          if (analysis.verdict) {
+            analysis.verdict.alreadyLowest = false;
+            const saved = customerPrice - cheapestFinal;
+            if (analysis.verdict.title && analysis.verdict.title.includes('잘 찾으셨')) {
+              analysis.verdict.title = `${Math.round(saved/10000)}만원 더 저렴한 경로가 있어요`;
+              analysis.verdict.desc = `${analysis.paths[0].store}에서 ${cheapestFinal.toLocaleString()}원에 구매 가능합니다. ${analysis.paths[0].condition || ''}`;
+            }
+          }
+        }
+      }
     }
 
     // 딜 정보 DB 누적 저장 (paths 각각)

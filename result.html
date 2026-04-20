@@ -1053,7 +1053,9 @@ function initResult(data, serverTier) {
 
   // 가격 브레이크다운 (원가 → 최적가 → 절약)
   const origP = data.currentPrice;
-  const bestP = data.paths?.[0]?.finalPrice || data.paths?.[0]?.price;
+  // paths 전체 중 finalPrice 기준 실제 최저가
+  const allFinalPrices = (data.paths || []).map(p => p.finalPrice || p.price).filter(v => v > 0);
+  const bestP = allFinalPrices.length > 0 ? Math.min(...allFinalPrices) : (data.paths?.[0]?.finalPrice || data.paths?.[0]?.price);
   window._bestPrice = bestP || 0;
   if (origP && bestP) {
     const savedAmt = origP - bestP;
