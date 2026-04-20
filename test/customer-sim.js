@@ -674,14 +674,9 @@ async function main() {
     console.log(`🔄 라운드 ${round}/${MAX_ROUNDS}`);
     console.log('─'.repeat(60));
 
-    // Agent 1: 모든 고객 경험 실행
-    console.log('\n👥 Agent 1: 10명 고객 경험 시작...');
-    const results = [];
-    for (const customer of CUSTOMERS) {
-      const r = await runCustomerExperience(customer);
-      results.push(r);
-      await new Promise(res => setTimeout(res, 2000));
-    }
+    // Agent 1: 모든 고객 경험 병렬 실행
+    console.log('\n👥 Agent 1: 10명 고객 경험 병렬 시작...');
+    const results = await Promise.all(CUSTOMERS.map(c => runCustomerExperience(c)));
 
     // Agent 2: 품질 분석 + 링크 검증
     console.log('\n📊 Agent 2: 품질 분석 + 링크 검증 집계...');
