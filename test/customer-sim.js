@@ -155,7 +155,7 @@ async function betaJoin(email) {
 // ═══════════════════════════════════════════════════════════
 // API 호출
 // ═══════════════════════════════════════════════════════════
-async function callAnalyze(body) {
+async function callAnalyze(body, token) {
   try {
     const res = await fetch(`${SERVER_URL}/api/analyze`, {
       method: 'POST',
@@ -163,7 +163,7 @@ async function callAnalyze(body) {
         'Content-Type': 'application/json',
         'x-test-token': ADMIN_TOKEN,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, token: token || undefined }),
       signal: AbortSignal.timeout(120000),
     });
     const json = await res.json();
@@ -234,7 +234,7 @@ async function runCustomerExperience(customer) {
 
   console.log(`  🔍 입력: "${customer.input.url.slice(0, 50)}" 분석 중...`);
   const start = Date.now();
-  const result = await callAnalyze(customer.input);
+  const result = await callAnalyze(customer.input, token);
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
   // API 응답 구조: { success, tier, analysisId, data: { model, paths, ... } }

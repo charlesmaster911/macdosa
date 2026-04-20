@@ -961,8 +961,8 @@ ${recentDeals || '없음'}
     if (email) upsertUser(db, { email, ip, source: 'analyze', url, analysisId: record.id });
     writeDB(db);
 
-    // FREE: 1위만 부분 공개, 2위 이하와 카드 조합은 잠금
-    if (tier === 'free' && analysis.paths) {
+    // FREE: 1위만 부분 공개, 2위 이하와 카드 조합은 잠금 (테스트 모드 제외)
+    if (tier === 'free' && !isTestMode && analysis.paths) {
       analysis.paths = analysis.paths.map((p, i) => ({ ...p, url: null, locked: i > 0 }));
       analysis.cards = analysis.cards?.map(c => ({ ...c, locked: true })) || [];
     }
