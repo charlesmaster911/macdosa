@@ -1234,8 +1234,54 @@ function startAnalysis() {
     document.getElementById('heroInput').focus();
     return;
   }
-  track('analysis_started', { url });
-  window.location.href = `/result?url=${encodeURIComponent(url)}`;
+  // 이미 베타 token 있으면 바로 분석
+  if (localStorage.getItem('macdosa_token')) {
+    track('analysis_started', { url });
+    window.location.href = `/result?url=${encodeURIComponent(url)}`;
+    return;
+  }
+  // token 없으면 이메일 입력 모달 표시
+  showEmailGate(url);
+}
+
+function showEmailGate(pendingUrl) {
+  const overlay = document.getElementById('emailGateOverlay');
+  overlay.style.display = 'flex';
+  overlay.dataset.url = pendingUrl;
+  document.getElementById('emailGateInput').focus();
+}
+
+async function submitEmailGate() {
+  const overlay = document.getElementById('emailGateOverlay');
+  const email = document.getElementById('emailGateInput').value.trim();
+  const msg = document.getElementById('emailGateMsg');
+  if (!email || !email.includes('@')) {
+    document.getElementById('emailGateInput').style.borderColor = '#FF3B30';
+    msg.textContent = '올바른 이메일을 입력해주세요';
+    msg.style.color = '#FF3B30';
+    return;
+  }
+  msg.style.color = 'rgba(255,255,255,0.5)';
+  msg.textContent = '확인 중...';
+  try {
+    const res = await fetch('/api/beta-join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('macdosa_token', data.token);
+      localStorage.setItem('macdosa_email', email);
+      track('beta_join_hero', { email_domain: email.split('@')[1] });
+      overlay.style.display = 'none';
+      window.location.href = `/result?url=${encodeURIComponent(overlay.dataset.url)}`;
+    }
+  } catch(e) {
+    // 네트워크 오류도 그냥 진행
+    overlay.style.display = 'none';
+    window.location.href = `/result?url=${encodeURIComponent(overlay.dataset.url)}`;
+  }
 }
 
 // Enter 키도 지원
@@ -1418,5 +1464,27 @@ async function submitFeedback() {
   } catch { btn.textContent = '제출하기'; btn.disabled = false; }
 }
 </script>
+
+<!-- 이메일 게이트 오버레이 -->
+<div id="emailGateOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)">
+  <div style="background:#1C1C1E;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:36px 32px;max-width:420px;width:100%;text-align:center;position:relative">
+    <button onclick="document.getElementById('emailGateOverlay').style.display='none'"
+      style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer;line-height:1">✕</button>
+    <div style="font-size:32px;margin-bottom:12px">🧙‍♂️</div>
+    <h3 style="font-size:20px;font-weight:700;color:#F5F5F7;margin:0 0 8px">무료 분석 시작</h3>
+    <p style="font-size:14px;color:rgba(245,245,247,0.55);margin:0 0 24px;line-height:1.5">이메일만 남기면 최저가 경로·카드 조합<br>전체를 바로 공개합니다</p>
+    <input id="emailGateInput" type="email" placeholder="이메일 주소 입력"
+      style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.18);border-radius:12px;padding:14px 16px;font-size:15px;color:#fff;font-family:inherit;outline:none;margin-bottom:10px"
+      onfocus="this.style.borderColor='#1A7040'" onblur="this.style.borderColor='rgba(255,255,255,0.18)'"
+      onkeydown="if(event.key==='Enter') submitEmailGate()" />
+    <div id="emailGateMsg" style="font-size:12px;min-height:16px;margin-bottom:12px;color:rgba(255,255,255,0.4)"></div>
+    <button onclick="submitEmailGate()"
+      style="width:100%;background:#1A7040;color:#fff;border:none;padding:14px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s"
+      onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+      무료로 분석하기 →
+    </button>
+    <p style="font-size:11px;color:rgba(255,255,255,0.25);margin:12px 0 0">스팸 없음 · 언제든 수신 거부 가능</p>
+  </div>
+</div>
 </body>
 </html>
