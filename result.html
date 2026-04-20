@@ -971,11 +971,41 @@ async function handleScrapedScreenshot(input) {
   processScrapedImage(input.files[0]);
 }
 
+const SCREENSHOT_MSGS = [
+  { emoji: '💓', text: '가슴이 두근두근...\n맥도사가 가격을 읽고 있어요' },
+  { emoji: '🙏', text: '스크린샷 찍느라 번거로우셨죠?\n하지만 곧 지갑이 기뻐할 거예요 💸' },
+  { emoji: '🕵️', text: 'AI가 이미지를 샅샅이 스캔 중...\n숨겨진 최저가를 찾고 있어요' },
+  { emoji: '💡', text: '잠깐, 이 가격이 정말 최선일까요?\n맥도사가 더 싼 곳 찾아볼게요' },
+  { emoji: '🔥', text: '오늘 딜 중에 이것보다 싼 게 있을 수도...\n확인 중이에요' },
+  { emoji: '🎯', text: '거의 다 됐어요!\n최적 구매 타이밍도 같이 알려드릴게요' },
+];
+
 async function processScrapedImage(file) {
   const statusEl = document.getElementById('scrapedStatus');
   const zone = document.getElementById('pasteZone');
-  if (statusEl) statusEl.textContent = '📷 AI가 이미지를 분석 중...';
-  if (zone) zone.innerHTML = '<div style="font-size:32px">⏳</div><div style="font-size:14px;color:#1A7040;margin-top:8px;font-weight:600;">분석 중...</div>';
+
+  // 두근두근 로딩 메시지 시작
+  let msgIdx = 0;
+  function showNextMsg() {
+    const m = SCREENSHOT_MSGS[msgIdx % SCREENSHOT_MSGS.length];
+    if (zone) zone.innerHTML = `
+      <div style="font-size:40px;margin-bottom:12px;animation:pulse 1s infinite alternate">${m.emoji}</div>
+      <div style="font-size:15px;font-weight:600;color:#1D1D1F;white-space:pre-line;line-height:1.7;">${m.text}</div>
+      <div style="margin-top:14px;width:48px;height:4px;background:#E5E5EA;border-radius:4px;overflow:hidden;margin-left:auto;margin-right:auto;">
+        <div id="loadBar" style="height:100%;background:#1A7040;border-radius:4px;animation:loadBar 1.8s linear infinite;"></div>
+      </div>`;
+    msgIdx++;
+  }
+  // pulse + loadBar 애니메이션 (한 번만 추가)
+  if (!document.getElementById('scrapeAnimStyle')) {
+    const s = document.createElement('style');
+    s.id = 'scrapeAnimStyle';
+    s.textContent = `@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.15)}} @keyframes loadBar{from{width:0%}to{width:100%}}`;
+    document.head.appendChild(s);
+  }
+  showNextMsg();
+  const ticker = setInterval(showNextMsg, 1800);
+
   const reader = new FileReader();
   reader.onload = async (e) => {
     const base64 = e.target.result.split(',')[1];
@@ -987,13 +1017,19 @@ async function processScrapedImage(file) {
         body: JSON.stringify({ image_base64: base64, media_type: mediaType })
       });
       const data = await res.json();
-      if (data.error) { if (statusEl) statusEl.textContent = '❌ ' + data.error; return; }
+      clearInterval(ticker);
+      if (data.error) {
+        if (zone) zone.innerHTML = `<div style="font-size:32px">😢</div><div style="font-size:14px;color:#FF3B30;margin-top:8px;">${data.error}</div>`;
+        return;
+      }
+      if (zone) zone.innerHTML = `<div style="font-size:36px">✅</div><div style="font-size:14px;color:#1A7040;margin-top:8px;font-weight:600;">인식 완료! 분석 시작...</div>`;
       const params = new URLSearchParams({ url: 'screenshot' });
       if (data.title) params.set('scraped_title', data.title);
       if (data.price) params.set('scraped_price', data.price);
       window.location.href = '/result?' + params.toString();
     } catch (err) {
-      if (statusEl) statusEl.textContent = '❌ 오류: ' + err.message;
+      clearInterval(ticker);
+      if (zone) zone.innerHTML = `<div style="font-size:32px">😢</div><div style="font-size:14px;color:#FF3B30;margin-top:8px;">오류: ${err.message}</div>`;
     }
   };
   reader.readAsDataURL(file);

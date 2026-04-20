@@ -35,7 +35,7 @@ if (!process.env.ADMIN_TOKEN) {
 }
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // 요청 로그
 app.use((req, res, next) => {
