@@ -1021,6 +1021,7 @@ function initResult(data, serverTier) {
 
   // 구매 경로 렌더링
   window._pathsData = data.paths || [];
+  window._analysisModel = data.model || '';
   if (data.paths && data.paths.length > 0) {
     const first = data.paths[0];
     const preview = $('path-preview');
@@ -1043,6 +1044,9 @@ function initResult(data, serverTier) {
 
   // 카드 할인 동적 렌더링
   if (data.cards && data.cards.length > 0) renderCards(data.cards);
+
+  // 베타/유료 token 있으면 구매링크 자동 해제
+  if (purchaseToken) unlockPaths();
 
   // 중고 시장 섹션
   if (data.usedMarket) renderUsedMarket(data.usedMarket, data.currentPrice);
@@ -1090,18 +1094,27 @@ function renderUsedMarket(used, newPrice) {
   const body = document.getElementById('usedMarketBody');
   if (!section || !body || !used) return;
 
+  // 검색어 추출 (모델명)
+  const modelQuery = encodeURIComponent((window._analysisModel || '맥북').replace(/[()]/g, '').trim());
   const channels = [
-    { key: 'macmuseum', label: '맥뮤지엄', desc: '(전문점·보증 있음)' },
-    { key: 'daangn',    label: '당근마켓',  desc: '(개인 직거래)' },
-    { key: 'joongna',   label: '중고나라/번개장터', desc: '(개인 판매)' },
-    { key: 'appleRefurb', label: '애플 공인 리퍼', desc: '(애플 보증)' },
+    { key: 'macmuseum',   label: '맥뮤지엄',          desc: '(전문점·보증)',   url: `https://www.macmuseum.co.kr/search?q=${modelQuery}` },
+    { key: 'daangn',      label: '당근마켓',            desc: '(개인 직거래)',   url: `https://www.daangn.com/search/${modelQuery}` },
+    { key: 'joongna',     label: '중고나라',             desc: '(개인 판매)',     url: `https://web.joongna.com/search/${modelQuery}` },
+    { key: 'bungae',      label: '번개장터',             desc: '(개인 판매)',     url: `https://m.bunjang.co.kr/search/products?q=${modelQuery}` },
+    { key: 'appleRefurb', label: '애플 공인 리퍼',       desc: '(애플 보증)',     url: 'https://www.apple.com/kr/shop/refurbished/mac' },
   ];
 
   let rows = channels
-    .filter(c => used[c.key])
-    .map(c => `<div class="used-price-row">
+    .filter(c => used[c.key] || c.key === 'bungae')
+    .filter(c => used[c.key] || c.key === 'bungae' && used.joongna)
+    .map(c => `<div class="used-price-row" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
       <span class="used-store">${c.label} <span style="font-size:11px;color:var(--apple-text2)">${c.desc}</span></span>
-      <span class="used-price-val">${used[c.key]}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${used[c.key] ? `<span class="used-price-val">${used[c.key]}</span>` : ''}
+        <a href="${c.url}" target="_blank" rel="noopener"
+           style="background:rgba(26,112,64,0.25);border:1px solid rgba(26,112,64,0.4);color:#4ade80;padding:4px 10px;border-radius:980px;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap;">
+          검색 →</a>
+      </div>
     </div>`).join('');
 
   if (used.priceRange) rows += `<div class="used-price-row">
@@ -1192,11 +1205,17 @@ function renderLockedPaths(paths) {
   const rankColors = ['#FFD60A', '#FF9F0A', '#8E8E93'];
   container.innerHTML = paths.slice(0, 3).map((p, i) => {
     const finalP = p.finalPrice || p.price;
+    const linkBtn = p.url
+      ? `<a href="${p.url}" target="_blank" rel="noopener"
+           style="display:inline-block;margin-top:6px;background:#1A7040;color:#fff;padding:5px 12px;border-radius:980px;font-size:12px;font-weight:600;text-decoration:none;">
+           바로 구매 →</a>`
+      : '';
     return `<div class="path-item">
       <div class="path-rank" style="background:${rankColors[i]};color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">${ranks[i]}</div>
       <div class="path-info">
         <div class="path-store">${p.store}</div>
         <div class="path-detail" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px">${buildDealTags(p)}</div>
+        ${linkBtn}
       </div>
       <div class="path-price">
         <div class="price-main">${finalP ? finalP.toLocaleString() + '원' : ''}</div>
