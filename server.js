@@ -460,6 +460,25 @@ function detectFlashSales(deals, productType) {
 }
 
 // DB 패턴 분석 — 누적 딜 데이터에서 인텔리전스 추출
+function getStoreSearchUrl(storeName, modelQuery) {
+  const q = encodeURIComponent(modelQuery || '');
+  const s = (storeName || '').toLowerCase();
+  if (s.includes('쿠팡'))        return `https://www.coupang.com/np/search?q=${q}`;
+  if (s.includes('g마켓') || s.includes('gmarket')) return `https://browse.gmarket.co.kr/search?keyword=${q}`;
+  if (s.includes('11번가'))      return `https://search.11st.co.kr/Search.tmall?kwd=${q}`;
+  if (s.includes('다나와'))      return `https://search.danawa.com/dsearch.php?query=${q}`;
+  if (s.includes('네이버'))      return `https://search.shopping.naver.com/search/all?query=${q}`;
+  if (s.includes('옥션'))        return `https://search.auction.co.kr/search?keyword=${q}`;
+  if (s.includes('위메프'))      return `https://search.wemakeprice.com/search?query=${q}`;
+  if (s.includes('티몬'))        return `https://search.tmon.co.kr/search/#_=_&keyword=${q}`;
+  if (s.includes('애플') || s.includes('apple') || s.includes('리퍼')) return `https://www.apple.com/kr/shop/buy-mac`;
+  if (s.includes('skt') || s.includes('sk텔레콤')) return `https://www.tworld.co.kr/v7/customer/benefit/device/list?searchValue=${q}`;
+  if (s.includes('kt'))          return `https://shop.olleh.com/search/${q}`;
+  if (s.includes('lgu') || s.includes('lgu+') || s.includes('엘지유플러스')) return `https://www.lguplus.com/ent/phone/smart-phone`;
+  // 기본: 네이버 쇼핑 검색
+  return `https://search.shopping.naver.com/search/all?query=${q}`;
+}
+
 function analyzeDealsDB(deals) {
   if (!deals || deals.length < 3) return null;
 
@@ -904,14 +923,15 @@ ${recentDeals || '없음'}
       });
     }
 
-    // paths finalPrice 보완 — 0이거나 없으면 네이버 데이터로 채움
-    if (analysis.paths && naverItems) {
+    // paths finalPrice + searchUrl 보완
+    if (analysis.paths) {
       analysis.paths = analysis.paths.map((p, i) => {
-        const fallbackPrice = naverItems[i] ? parseInt(naverItems[i].lprice) : 0;
+        const fallbackPrice = naverItems?.[i] ? parseInt(naverItems[i].lprice) : 0;
         return {
           ...p,
           finalPrice: p.finalPrice || p.price || fallbackPrice || null,
-          url: p.url || naverItems[i]?.link || null,
+          url: p.url || naverItems?.[i]?.link || null,
+          searchUrl: getStoreSearchUrl(p.store, analysis.model || url),
         };
       });
     }

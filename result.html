@@ -1211,8 +1211,9 @@ function renderLockedPaths(paths) {
   const rankColors = ['#FFD60A', '#FF9F0A', '#8E8E93'];
   container.innerHTML = paths.slice(0, 3).map((p, i) => {
     const finalP = p.finalPrice || p.price;
-    const linkBtn = p.url
-      ? `<a href="${p.url}" target="_blank" rel="noopener"
+    const destUrl = p.url || p.searchUrl;
+    const linkBtn = destUrl
+      ? `<a href="${destUrl}" target="_blank" rel="noopener"
            style="display:inline-block;margin-top:6px;background:#1A7040;color:#fff;padding:5px 12px;border-radius:980px;font-size:12px;font-weight:600;text-decoration:none;">
            바로 구매 →</a>`
       : '';
