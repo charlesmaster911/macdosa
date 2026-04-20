@@ -179,15 +179,20 @@ async function callAnalyze(body, token) {
 async function fetchStatus(url) {
   try {
     const res = await fetch(url, {
-      method: 'HEAD',
+      method: 'GET',
       redirect: 'follow',
       signal: AbortSignal.timeout(6000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' }
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36' }
     });
     return res.status;
   } catch {
     return 0;
   }
+}
+
+// 403/418 = bot 탐지 (브라우저 접근 가능), 0 = 진짜 접근 불가
+function isLinkOk(status) {
+  return status >= 200 && status < 500 && status !== 404 && status !== 410;
 }
 
 async function checkLinks(paths, modelQuery) {
@@ -197,7 +202,7 @@ async function checkLinks(paths, modelQuery) {
   for (const p of (paths || [])) {
     if (p.url) {
       const status = await fetchStatus(p.url);
-      checks.push({ type: 'path', store: p.store, url: p.url, status, ok: status >= 200 && status < 400 });
+      checks.push({ type: 'path', store: p.store, url: p.url, status, ok: isLinkOk(status) });
     }
   }
 
@@ -212,7 +217,7 @@ async function checkLinks(paths, modelQuery) {
   ];
   for (const l of usedLinks) {
     const status = await fetchStatus(l.url);
-    checks.push({ type: 'used', name: l.name, url: l.url, status, ok: status >= 200 && status < 400 });
+    checks.push({ type: 'used', name: l.name, url: l.url, status, ok: isLinkOk(status) });
   }
 
   return checks;
