@@ -714,17 +714,29 @@ app.post('/api/analyze', async (req, res) => {
         }
         return '네이버 API 데이터 없음 (학습 데이터로 추정)';
       }
-      const lines = naverItems.slice(0, 8).map(item => {
+      // 전체 목록 (최대 15개)
+      const lines = naverItems.slice(0, 15).map(item => {
         const title = item.title.replace(/<[^>]+>/g, '');
         return `  - ${item.mallName} | ${parseInt(item.lprice).toLocaleString()}원 | ${title} | ${item.link}`;
       });
+
+      // 주요 오프라인/전문 판매채널 별도 강조
+      const KEY_STORES = ['다나와', '롯데하이마트', '하이마트', '11번가', '이마트', 'G마켓', '옥션', 'SSG', '롯데온', '전자랜드', 'KT공식', 'SKT공식', 'LGU+공식'];
+      const keyItems = naverItems.filter(i => KEY_STORES.some(s => i.mallName.includes(s)));
+      const keyBlock = keyItems.length > 0
+        ? `\n★ 주요 채널 실시간 가격 (반드시 paths에 포함):\n` + keyItems.map(i =>
+            `  ★ ${i.mallName} | ${parseInt(i.lprice).toLocaleString()}원 | ${i.link}`
+          ).join('\n')
+        : '';
+
       const block = `━━━ 네이버 쇼핑 실시간 최저가 (API 직접 조회) ━━━
 검색어: "${modelQuery}"
-${lines.join('\n')}
+${lines.join('\n')}${keyBlock}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 고객 입력 가격: ${customerPrice ? customerPrice.toLocaleString()+'원' : '미확인'}
-네이버 최저가: ${naverLowest ? naverLowest.toLocaleString()+'원' : '미확인'}
-가격 비교 결과: ${isAlreadyLowest ? '✅ 이미 최저가 (고객이 잘 찾음)' : naverLowest && customerPrice ? `⚡ ${(customerPrice - naverLowest).toLocaleString()}원 더 절약 가능` : '비교 불가'}`;
+네이버 raw 최저가: ${naverLowest ? naverLowest.toLocaleString()+'원' : '미확인'}
+⚠️ 주의: 위 가격은 카드할인/쿠폰/교육할인 미반영. paths에서 모든 할인 적용 후 finalPrice 기준으로 alreadyLowest 판단.
+★★★ 다나와·하이마트·11번가 등 위 ★ 채널이 있으면 반드시 paths에 포함할 것.`;
       return block;
     })();
 
@@ -795,7 +807,7 @@ ${recentDeals || '없음'}
 {
   "model": "정확한 모델명 (예: iPhone 16 Pro 256GB 블랙 / MacBook Pro 14인치 M4 Pro 24GB 1TB)",
   "currentPrice": 숫자(분석 URL 현재 판매가),
-  "saveAmount": 숫자(최적 경로 적용 시 신품 정가 대비 총 절약액),
+  "saveAmount": "★ 고객 입력가 - paths 중 가장 싼 finalPrice. 고객가 미확인이면 신품 정가 기준. 반드시 양수",
   "tian": {
     "title": "30일 시세 흐름 한 줄",
     "body": "현재 가격이 최근 30일 중 어느 위치인지, 가격이 오르는지 내리는지 2문장",
@@ -816,9 +828,9 @@ ${recentDeals || '없음'}
   },
   "verdict": {
     "buy": true또는false,
-    "alreadyLowest": true또는false,
-    "title": "최종 한 줄 결론 (이미 최저가면 '잘 찾으셨어요! 현재 최저가입니다 🎉')",
-    "desc": "이미 최저가면 칭찬 멘트. 아니면 절약 경로 안내 2문장."
+    "alreadyLowest": "★★★ 반드시 paths의 모든 finalPrice >= 고객 입력가일 때만 true. 카드할인/교육할인 포함 경로 중 하나라도 finalPrice < 고객가면 반드시 false",
+    "title": "최종 한 줄 결론. alreadyLowest=true일 때만 '잘 찾으셨어요'. false면 'X만원 더 저렴한 경로가 있어요'",
+    "desc": "구체적 절약 경로 안내 2문장. 판매처명·가격·조건 명시."
   },
   "paths": [
     {
@@ -938,24 +950,48 @@ ${recentDeals || '없음'}
           searchUrl: getStoreSearchUrl(p.store, analysis.model || url),
         };
       });
+    }
 
-      // ★ paths finalPrice 오름차순 정렬 (가장 싼 게 1위)
+    // ═══════════════════════════════════════════════════
+    // validateAndFix — 서버 측 최종 검증 (AI 결과 신뢰 금지)
+    // ═══════════════════════════════════════════════════
+    if (analysis.paths && analysis.paths.length > 0) {
+      // 1. finalPrice 없는 경로 제거
+      analysis.paths = analysis.paths.filter(p => p.finalPrice && p.finalPrice > 0);
+
+      // 2. finalPrice 오름차순 정렬 (가장 싼 게 1위)
       analysis.paths.sort((a, b) => (a.finalPrice || Infinity) - (b.finalPrice || Infinity));
       analysis.paths.forEach((p, i) => { p.rank = i + 1; });
 
-      // ★ alreadyLowest 서버 검증 — AI 오판 방지
-      if (customerPrice && analysis.paths.length > 0) {
-        const cheapestFinal = analysis.paths[0].finalPrice;
-        if (cheapestFinal && cheapestFinal < customerPrice) {
-          // 더 싼 경로가 있으면 강제로 alreadyLowest=false + verdict 수정
+      // 3. 각 path saveAmount 재계산 (AI 계산 신뢰 안 함)
+      if (customerPrice) {
+        analysis.paths = analysis.paths.map(p => ({
+          ...p,
+          saveAmount: Math.max(0, customerPrice - p.finalPrice),
+        }));
+      }
+
+      // 4. 전체 saveAmount = paths[0].saveAmount
+      const cheapestFinal = analysis.paths[0].finalPrice;
+      if (customerPrice && cheapestFinal) {
+        const realSave = Math.max(0, customerPrice - cheapestFinal);
+        analysis.saveAmount = realSave;
+
+        // 5. alreadyLowest 강제 교정
+        if (cheapestFinal < customerPrice) {
           if (analysis.verdict) {
             analysis.verdict.alreadyLowest = false;
-            const saved = customerPrice - cheapestFinal;
-            if (analysis.verdict.title && analysis.verdict.title.includes('잘 찾으셨')) {
-              analysis.verdict.title = `${Math.round(saved/10000)}만원 더 저렴한 경로가 있어요`;
-              analysis.verdict.desc = `${analysis.paths[0].store}에서 ${cheapestFinal.toLocaleString()}원에 구매 가능합니다. ${analysis.paths[0].condition || ''}`;
+            analysis.verdict.buy = true;
+            // "잘 찾으셨어요" 오표시 교정
+            if (!analysis.verdict.title || analysis.verdict.title.includes('잘 찾으셨') || analysis.verdict.title.includes('최저가입니다')) {
+              const savedM = Math.round(realSave / 10000);
+              analysis.verdict.title = `${savedM > 0 ? savedM + '만원 더 저렴한 경로가 있어요 💰' : '더 저렴한 구매 경로가 있어요'}`;
+              analysis.verdict.desc = `${analysis.paths[0].store}에서 ${cheapestFinal.toLocaleString()}원에 구매 가능합니다. ${analysis.paths[0].condition || ''}`.trim();
             }
           }
+        } else if (cheapestFinal >= customerPrice && analysis.verdict) {
+          // 진짜 최저가인 경우
+          analysis.verdict.alreadyLowest = true;
         }
       }
     }

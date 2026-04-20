@@ -1051,23 +1051,25 @@ function initResult(data, serverTier) {
   // 모델명 & 절약액
   if (data.model) $('modelName').textContent = data.model;
 
-  // 가격 브레이크다운 (원가 → 최적가 → 절약)
+  // 가격 브레이크다운 — paths[0].finalPrice = 서버가 정렬한 실제 최저가
   const origP = data.currentPrice;
-  // paths 전체 중 finalPrice 기준 실제 최저가
-  const allFinalPrices = (data.paths || []).map(p => p.finalPrice || p.price).filter(v => v > 0);
-  const bestP = allFinalPrices.length > 0 ? Math.min(...allFinalPrices) : (data.paths?.[0]?.finalPrice || data.paths?.[0]?.price);
+  // 서버가 이미 finalPrice 오름차순 정렬했으므로 paths[0]이 최저가
+  const bestP = data.paths?.[0]?.finalPrice || data.paths?.[0]?.price || null;
+  // saveAmount = 서버 재계산값 우선, 없으면 클라이언트 계산
+  const realSave = data.saveAmount > 0 ? data.saveAmount : (origP && bestP ? Math.max(0, origP - bestP) : 0);
   window._bestPrice = bestP || 0;
-  if (origP && bestP) {
-    const savedAmt = origP - bestP;
-    $('origPriceEl').textContent = `${origP.toLocaleString()}원`;
+  if (bestP) {
+    const savedAmt = realSave;
+    if (origP) {
+      $('origPriceEl').textContent = `${origP.toLocaleString()}원`;
+      $('priceBreakdown').style.display = 'flex';
+    }
     $('bestPriceEl').textContent = `${bestP.toLocaleString()}원`;
-    $('saveBadgeEl').textContent = `↓ ${Math.round(savedAmt/10000)}만원 절약`;
-    $('priceBreakdown').style.display = 'flex';
-    // 상단 절약 멘트 — 실제 계산값으로 덮어씀
-    const displaySave = savedAmt > 0 ? savedAmt : (data.saveAmount || 0);
-    if (displaySave > 0) {
-      $('saveAmount').textContent = `지금 사면 ${Math.round(displaySave / 10000)}만원 절약 가능`;
+    if (savedAmt > 0) {
+      $('saveBadgeEl').textContent = `↓ ${Math.round(savedAmt/10000)}만원 절약`;
+      $('saveAmount').textContent = `지금 사면 ${Math.round(savedAmt/10000)}만원 절약 가능`;
     } else {
+      $('saveBadgeEl').textContent = '';
       $('saveAmount').textContent = '최저가 분석 완료';
     }
     // VAT 흐름 업데이트
