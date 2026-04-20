@@ -582,9 +582,11 @@ app.post('/api/analyze', async (req, res) => {
       productInfo = await scrapeProductInfo(url);
     }
 
-    // 비애플 제품 차단 (삼성/LG/윈도우 등)
+    // 비애플 제품 차단 — 화이트리스트 방식 (애플 키워드 없으면 전부 차단)
     const titleKnown = productInfo.title && productInfo.title !== '스크랩 실패' && productInfo.title !== '제목 없음';
-    const isNonApple = titleKnown && /galaxy|갤럭시|windows|갤탭|LG그램|삼성노트북|레노버|ThinkPad|XPS|Surface\s|델\s|HP\s/i.test(productInfo.title);
+    const APPLE_PATTERN = /macbook|mac\s?book|mac\s?air|mac\s?pro|mac\s?mini|mac\s?studio|imac|iphone|ipad|airpods|apple\s?watch|apple\s?tv|apple\s?pencil|magic\s?keyboard|magic\s?mouse|리퍼비시|refurb/i;
+    const isApple = APPLE_PATTERN.test(productInfo.title);
+    const isNonApple = titleKnown && !isApple;
     if (isNonApple) {
       return res.status(400).json({
         error: '맥도사는 애플 제품 전문입니다 🍎\nMacBook · iPhone · iPad · AirPods · Apple Watch\n\n혹시 애플 제품으로 환승을 고민 중이시라면,\n위 제품 모델명이나 링크를 입력해보세요!',
