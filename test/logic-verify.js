@@ -6,7 +6,7 @@
  */
 
 const BASE_URL = 'http://localhost:3000';
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'macdosa-admin-2024';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'macdosa-admin-2026';
 
 const RED   = '\x1b[31m';
 const GREEN = '\x1b[32m';
@@ -60,7 +60,9 @@ async function callAnalyze(input) {
     const err = await res.json().catch(() => ({}));
     throw new Error(`HTTP ${res.status}: ${err.error || 'unknown'}`);
   }
-  return res.json();
+  const body = await res.json();
+  // 서버 응답: { success, data: analysis } — data 레이어 unwrap
+  return body.data || body;
 }
 
 function verify(data, expect, customerPrice) {

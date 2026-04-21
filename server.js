@@ -73,7 +73,7 @@ async function searchNaverShopping(query) {
     const url = `https://openapi.naver.com/v1/search/shop.json?query=${encodeURIComponent(query)}&display=50&sort=lprice`;
     const res = await fetch(url, {
       headers: { 'X-Naver-Client-Id': clientId, 'X-Naver-Client-Secret': clientSecret },
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(12000)
     });
     if (!res.ok) { console.error(`네이버 API ${res.status}`); return []; }
     const data = await res.json();
@@ -92,14 +92,22 @@ async function searchNaverShopping(query) {
 
 // 쿠팡 검색 + 직접 URL 처리
 async function searchCoupang(query) {
+  const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36';
   // 쿠팡 URL 직접 입력 감지
-  const coupangUrlMatch = query.match(/coupang\.com\/vp\/products\/(\d+)/);
+  const coupangUrlMatch = query.match(/https?:\/\/(?:www\.)?coupang\.com\/vp\/products\/(\d+)/) || 
+                          query.match(/coupang\.com(?:\/vp\/products|\/vp|\/vpx?\/products)\/(\d+)/) || 
+                          query.match(/coupang\.com.*?(\d{10,})/);
   if (coupangUrlMatch) {
     const productId = coupangUrlMatch[1];
     try {
       const res = await fetch(`https://www.coupang.com/vp/products/${productId}`, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-        signal: AbortSignal.timeout(5000)
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://www.coupang.com/',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'ko-KR,ko;q=0.9'
+        },
+        signal: AbortSignal.timeout(12000)
       });
       if (res.ok) {
         const html = await res.text();
@@ -122,10 +130,17 @@ async function searchCoupang(query) {
 
   try {
     const res = await fetch(`https://www.coupang.com/np/search?q=${encodeURIComponent(query)}&channel=search&sorter=scoreDesc`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-      signal: AbortSignal.timeout(5000)
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.coupang.com/',
+        'Accept-Language': 'ko-KR,ko;q=0.9'
+      },
+      signal: AbortSignal.timeout(12000)
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`⚠️ 쿠팡 검색 ${res.status} - 스크린샷 안내 필요`);
+      return [{ title: '쿠팡 검색 (접근 불가)', price: 0, link: `https://www.coupang.com/np/search?q=${encodeURIComponent(query)}`, mall: '쿠팡', source: 'coupang', error: 'http_error', hint: '쿠팡 앱/PC에서 직접 검색 후 스크린샷 제출' }];
+    }
     const html = await res.text();
     const items = [];
     const matches = html.match(/"productId"\s*:\s*"?(\d+)"?[^}]*?(?:"displayName"|"name")\s*:\s*"([^"]+)"[^}]*?"(?:lowestPrice|deliveryFee)"\s*:\s*(\d+)/g) || [];
@@ -149,10 +164,37 @@ async function searchCoupang(query) {
 
 // 당근마켓 중고가 검색
 async function searchDangn(query) {
+  const dangnUrlMatch = query.match(/daangn\.com\/articles\/(\d+)/) || 
+                        query.match(/https?:\/\/(?:www\.)?daangn\.com\/articles\/(\d+)/);
+  if (dangnUrlMatch) {
+    const articleId = dangnUrlMatch[1];
+    try {
+      const res = await fetch(`https://www.daangn.com/articles/${articleId}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(12000)
+      });
+      if (!res.ok) {
+        console.warn(`⚠️ 당근마켓 ${res.status}`);
+        return [{ title: '당근마켓 상품 (접근 불가)', price: 0, link: query, mall: '당근마켓', source: 'dangn', error: 'http_error', hint: '앱에서 직접 확인 후 스크린샷 제출' }];
+      }
+      const html = await res.text();
+      const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/) || 
+                         html.match(/"title"\s*:\s*"([^"]+)"/);  if (res.ok) {
+        const priceMatch = html.match(/([0-9,]+)원/) || 
+                           html.match(/"price"\s*:\s*(\d+)/);
+        if (titleMatch && priceMatch) {
+          const priceStr = typeof priceMatch[1] === 'string' ? priceMatch[1].replace(/,/g, '') : priceMatch[1];
+          return [{ title: titleMatch[1], price: parseInt(priceStr), link: query, mall: '당근마켓', source: 'dangn' }];
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ 당근마켓 URL 파싱 실패:', e.message);
+    }
+  }
   try {
     const res = await fetch(`https://www.daangn.com/search/?keyword=${encodeURIComponent(query)}&type=general`, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(12000)
     });
     if (!res.ok) return [];
     const html = await res.text();
@@ -192,7 +234,44 @@ function analyzePricing(items) {
   
   const shoppingPaths = items.length > 0 ? items.slice(0, 3).map((i, idx) => `${idx + 1}. ${i.mall}: ${i.price?.toLocaleString()}원`) : [];
   
-  return { lowest, avg, discount, timing, malls, shippingNote, storageRecommendation, shoppingPaths, itemCount: items.length };
+  // Apple Care+ AS 정보
+  const asInfo = items[0]?.title?.toLowerCase().includes('iphone|ipad|macbook|airpods') 
+    ? '🛡️ Apple Care+ 가입 가능 (1년 추가 보증)'
+    : '📱 공식 Apple AS 센터에서 서비스 제공';
+  
+  // 학생할인 정보
+  const studentDiscount = '🎓 Apple 교육할인 적용 가능 (Apple.com에서 신분증 인증 후 5-10% 할인)';
+  
+  return { lowest, avg, discount, timing, malls, shippingNote, storageRecommendation, shoppingPaths, itemCount: items.length, asInfo, studentDiscount };
+}
+
+// Apple 제품 자동 감지
+function isAppleProduct(query) {
+  const patterns = /macbook|iphone|ipad|airpods|apple watch|mac mini|mac studio|imac|mac pro|apple care/i;
+  return patterns.test(query);
+}
+
+// 제품 모델명 추출 (M4, 14인치, USB-C 등)
+function extractProductSpecs(query) {
+  const model = query.match(/M\d|M\dX?[^\s]*/i)?.[0] || '';
+  const size = query.match(/(\d+)["인치]/)?.[1] || '';
+  const storage = query.match(/(\d+)GB/i)?.[1] || '';
+  const color = query.match(/(스페이스 그레이|실버|미드나이트|스타라이트|골드|핑크|퍼플)/)?.[0] || '';
+  const variant = query.match(/USB-C|뮤직/i)?.[0] || '';
+  return { model, size, storage, color, variant };
+}
+
+// Apple 제품 감지 시 검색 로직 개선
+function enhanceAppleSearch(query, results) {
+  if (!isAppleProduct(query)) return results;
+  const specs = extractProductSpecs(query);
+  // Apple 공식스토어 링크 우선 제공
+  const appleStoreLink = `https://www.apple.com/kr/shop${specs.model ? '/buy-' + specs.model.toLowerCase() : ''}`;
+  return {
+    ...results,
+    appleOfficialLink: appleStoreLink,
+    searchHint: `✅ Apple 공식 제품 인식 완료\n모델: ${specs.model || '미지정'} | 용량: ${specs.storage}GB | 색상: ${specs.color || '미지정'}`
+  };
 }
 
 // 제품 종류 감지
@@ -584,7 +663,7 @@ app.post('/api/analyze', async (req, res) => {
 
     // 비애플 제품 차단 — 화이트리스트 방식 (애플 키워드 없으면 전부 차단)
     const titleKnown = productInfo.title && productInfo.title !== '스크랩 실패' && productInfo.title !== '제목 없음';
-    const APPLE_PATTERN = /macbook|mac\s?book|mac\s?air|mac\s?pro|mac\s?mini|mac\s?studio|imac|iphone|ipad|airpods|apple\s?watch|apple\s?tv|apple\s?pencil|magic\s?keyboard|magic\s?mouse|리퍼비시|refurb/i;
+    const APPLE_PATTERN = /macbook|mac\s?book|mac\s?air|mac\s?pro|mac\s?mini|mac\s?studio|imac|iphone|ipad|airpods|apple\s?watch|apple\s?tv|apple\s?pencil|magic\s?keyboard|magic\s?mouse|리퍼비시|refurb|맥북|아이폰|아이패드|에어팟|애플워치|맥미니|맥스튜디오|아이맥/i;
     const isApple = APPLE_PATTERN.test(productInfo.title);
     const isNonApple = titleKnown && !isApple;
     if (isNonApple) {
@@ -717,15 +796,15 @@ app.post('/api/analyze', async (req, res) => {
       // 전체 목록 (최대 15개)
       const lines = naverItems.slice(0, 15).map(item => {
         const title = item.title.replace(/<[^>]+>/g, '');
-        return `  - ${item.mallName} | ${parseInt(item.lprice).toLocaleString()}원 | ${title} | ${item.link}`;
+        return `  - ${item.mall} | ${item.price.toLocaleString()}원 | ${title} | ${item.link}`;
       });
 
       // 주요 오프라인/전문 판매채널 별도 강조
       const KEY_STORES = ['다나와', '롯데하이마트', '하이마트', '11번가', '이마트', 'G마켓', '옥션', 'SSG', '롯데온', '전자랜드', 'KT공식', 'SKT공식', 'LGU+공식'];
-      const keyItems = naverItems.filter(i => KEY_STORES.some(s => i.mallName.includes(s)));
+      const keyItems = naverItems.filter(i => KEY_STORES.some(s => (i.mall || '').includes(s)));
       const keyBlock = keyItems.length > 0
         ? `\n★ 주요 채널 실시간 가격 (반드시 paths에 포함):\n` + keyItems.map(i =>
-            `  ★ ${i.mallName} | ${parseInt(i.lprice).toLocaleString()}원 | ${i.link}`
+            `  ★ ${i.mall} | ${i.price.toLocaleString()}원 | ${i.link}`
           ).join('\n')
         : '';
 
@@ -912,11 +991,11 @@ ${recentDeals || '없음'}
     if (!analysis.paths || analysis.paths.length === 0) {
       if (naverItems && naverItems.length > 0) {
         analysis.paths = naverItems.slice(0, 5).map((item, i) => ({
-          rank: i + 1, store: item.mallName, isUsed: false, usedGrade: null,
+          rank: i + 1, store: item.mall, isUsed: false, usedGrade: null,
           dealType: '최저가', cardName: null, discountRate: null, couponInfo: null,
           condition: '네이버 쇼핑 최저가 기준',
-          price: parseInt(item.lprice), finalPrice: parseInt(item.lprice),
-          saveAmount: customerPrice ? Math.max(0, customerPrice - parseInt(item.lprice)) : 0,
+          price: item.price, finalPrice: item.price,
+          saveAmount: customerPrice ? Math.max(0, customerPrice - item.price) : 0,
           url: item.link,
         }));
       } else if (brainFallbackPaths.length > 0) {
